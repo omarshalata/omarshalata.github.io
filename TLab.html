@@ -1,0 +1,2867 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Talents Lab Configurator</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    /* CSS Custom Properties for Theming - UPDATED */
+    :root {
+      /* New 7-Color Brand Palette */
+      --primary-color: #2F135E;          /* Deep Violet */
+      --primary-color-dark: #FF7A5C;      /* Sunset Coral (for hover) */
+      --gradient-start: #FF9C7B;         /* Peach Glow */
+      --gradient-end: #FF7A5C;          /* Sunset Coral */
+
+      /* Chart & Accent Colors */
+      --accent-color: #FF7A5C;          /* Sunset Coral (On-Site Hours) */
+      --accent-color-orange: #2F135E;     /* Deep Violet (Mentoring Hours) */
+      --accent-color-success: #3AB795;    /* UPDATED: Keppel Green (Prices, Online, Analog) */
+      --accent-color-blue: var(--accent-color-success); /* Mapped to new green */
+      --accent-color-yellow: var(--accent-color); /* UPDATED: Mapped to On-Site (Sunset Coral) */
+
+      /* Payment Box */
+      --payment-box-border: #6BAAAB;       /* Muted Teal */
+      --payment-box-text: #2F135E;         /* Deep Violet (Text) */
+      --payment-box-bg: #FFEFE3;           /* Soft Cream (Background) */
+      
+      /* Text Colors */
+      --text-primary: #2F135E;           /* Deep Violet */
+      --text-secondary: #2F135E;         /* Deep Violet */
+      --text-muted: rgba(47, 19, 94, 0.85); /* Deep Violet 85% */
+      --text-light: rgba(47, 19, 94, 0.7); /* Deep Violet 70% */
+      --text-on-primary: #ffffff;          /* White (on Deep Violet/Coral) */
+      --text-on-success: #ffffff;          /* UPDATED: White (on Keppel Green) */
+      
+      /* Backgrounds */
+      --bg-body: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+      --bg-white: #FCE3D3;          /* Warm Beige (Main Cards) */
+      --bg-light: #FFEFE3;          /* Soft Cream (Nested Elements) */
+      --bg-off-white: #FFEFE3;       /* Soft Cream (Nested Elements) */
+      
+      /* Borders */
+      --border-color: rgba(47, 19, 94, 0.2); /* Deep Violet 20% */
+      --border-color-dark: rgba(47, 19, 94, 0.3); /* Deep Violet 30% */
+      --border-color-darker: rgba(47, 19, 94, 0.4); /* Deep Violet 40% */
+    }
+
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-body);
+      min-height: 100%;
+      color: var(--text-primary);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Compact Header */
+    .header {
+      background: var(--bg-white);
+      border-radius: 8px;
+      padding: 14px 20px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-title h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary-color);
+      line-height: 1.2;
+    }
+
+    .header-title p {
+      margin: 4px 0 0 0;
+      color: var(--text-light);
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .lang-toggle {
+      display: flex;
+      gap: 6px;
+      background: var(--bg-light);
+      padding: 3px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .lang-btn {
+      padding: 8px 18px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 4px;
+      font-weight: 600;
+      transition: all 0.2s;
+      font-size: 14px;
+      color: var(--text-light);
+      line-height: 1.4;
+    }
+    
+    /* NEW: Hover effect for non-active language button */
+    .lang-btn:not(.active):hover {
+      background-color: var(--bg-white);
+      color: var(--text-primary);
+    }
+
+    .lang-btn.active {
+      background: var(--primary-color);
+      color: var(--text-on-primary);
+    }
+
+    /* Single Column Compact Layout */
+    .main-card {
+      background: var(--bg-white);
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Compact Grid Layout */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .config-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .section {
+      background: var(--bg-off-white);
+      border-radius: 6px;
+      padding: 14px;
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+    }
+
+    .section:hover {
+      border-color: var(--border-color-dark);
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin: 0 0 14px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      line-height: 1.3;
+    }
+
+    /* Elegant Participant Input */
+    .participant-control {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      background: var(--bg-white);
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      direction: ltr;
+    }
+
+    .control-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: var(--primary-color);
+      border-radius: 6px;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-on-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .control-btn:hover {
+      background: var(--primary-color-dark);
+    }
+
+    .control-btn:active {
+      transform: scale(0.95);
+    }
+
+    .control-btn:disabled {
+      background: var(--border-color-dark);
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .control-btn:disabled:hover {
+      background: var(--border-color-dark);
+      transform: none;
+    }
+
+    .participant-input {
+      flex: 1;
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-light);
+      color: var(--primary-color);
+      transition: all 0.2s;
+      letter-spacing: -1px;
+      min-width: 0;
+    }
+
+    .participant-input:focus {
+      outline: none;
+      background: #edf2f7;
+      border-color: var(--primary-color);
+    }
+
+    .hint-text {
+      font-size: 12px;
+      color: var(--text-light);
+      font-weight: 500;
+      text-align: center;
+      padding: 4px 12px;
+      background: var(--bg-light);
+      border-radius: 4px;
+      display: block;
+      margin: 2px auto 0 auto;
+      width: fit-content;
+      line-height: 1.4;
+    }
+
+    .group-chips {
+      margin-top: 16px;
+      background: var(--bg-white);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .group-chips-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      background: var(--primary-color);
+      color: var(--text-on-primary);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1.3;
+    }
+
+    .chip-icon {
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
+    }
+
+    /* Compact Checkbox Addons */
+    .addon-box {
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .addon-box:hover {
+      border-color: var(--border-color-dark);
+    }
+
+    .addon-box.active {
+      border-color: var(--primary-color);
+      background: var(--bg-light);
+    }
+
+    .addon-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: opacity 0.2s;
+      cursor: pointer;
+    }
+
+    .collapse-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      transition: transform 0.3s ease, opacity 0.2s;
+      color: var(--primary-color);
+      margin-inline-start: auto;
+    }
+
+    .collapse-icon.collapsed {
+      transform: rotate(-90deg);
+      opacity: 0.4;
+    }
+
+    [dir="rtl"] .collapse-icon.collapsed {
+      transform: rotate(90deg);
+    }
+
+    .collapse-icon.disabled {
+      opacity: 0.3;
+      color: var(--border-color-dark);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .addon-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--primary-color);
+    }
+
+    .addon-checkbox.indeterminate {
+      opacity: 1;
+    }
+
+    .addon-title {
+      flex: 1;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      pointer-events: none; /* So click passes to header */
+    }
+
+    .addon-price {
+      background: var(--accent-color-success); /* UPDATED: Keppel Green */
+      color: var(--text-on-success);         /* UPDATED: White */
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .addon-details {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .addon-details ul {
+      margin: 6px 0;
+      padding-inline-start: 14px;
+    }
+
+    .addon-details li {
+      margin: 3px 0;
+    }
+
+    .expandable {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .expandable.open {
+      max-height: 800px;
+    }
+
+    .sub-option {
+      background: var(--bg-light);
+      padding: 16px;
+      border-radius: 6px;
+      margin-top: 8px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sub-option-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      cursor: pointer;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .booklet-option-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+      background: var(--bg-white);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .quantity-controls-wrapper {
+      display: none;
+      padding: 12px;
+      background: var(--bg-off-white);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      margin-top: 4px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .quantity-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      direction: ltr;
+    }
+
+    .quantity-btn {
+      width: 44px;
+      height: 44px;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    
+    /* Combined class for identical inputs */
+    .quantity-input-field,
+    .quantity-input {
+      flex: 1;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      padding: 8px;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-white);
+      color: var(--primary-color);
+      transition: all 0.2s;
+      min-width: 0;
+    }
+
+    .quantity-input-field:focus,
+    .quantity-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      background: var(--bg-light);
+    }
+
+    .sub-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--primary-color);
+      flex-shrink: 0;
+    }
+    
+    /* Trainer Pricing Box (Moved from inline styles) */
+    .pricing-details-box {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-white);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+    .pricing-details-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .pricing-details-content {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .pricing-details-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+    .pricing-details-row span:last-child {
+      font-weight: 700;
+    }
+    .pricing-details-row.extra {
+      display: none;
+      border-top: 1px solid var(--border-color);
+      margin-top: 6px;
+      padding-top: 6px;
+    }
+    .pricing-details-total {
+      border-top: 2px solid var(--border-color-dark);
+      margin-top: 8px;
+      padding-top: 8px;
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 15px;
+    }
+
+    /* Compact Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .metric-box {
+      background: var(--primary-color);
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .metric-box:hover {
+      background: var(--primary-color-dark);
+    }
+
+    .metric-icon {
+      margin-bottom: 6px;
+      color: var(--text-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .metric-icon svg {
+      stroke: var(--text-on-primary);
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-on-primary);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.95);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      line-height: 1.3;
+    }
+
+    /* Hours Breakdown Section */
+    .hours-breakdown {
+      background: var(--bg-off-white);
+      padding: 20px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+    }
+
+    .hours-breakdown-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin: 0 0 18px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .hours-content {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 24px;
+      align-items: center;
+    }
+    
+    .games-breakdown-grid {
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .hours-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .games-breakdown-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pie-container {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 0 auto;
+    }
+
+    .pie-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .pie-total {
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--primary-color);
+      line-height: 1;
+      margin-bottom: 6px;
+      letter-spacing: -1px;
+    }
+
+    .pie-label {
+      font-size: 14px;
+      color: var(--text-light);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      line-height: 1.4;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 4px 0;
+    }
+
+    .legend-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg-white);
+      padding: 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+    }
+
+    .legend-item:hover {
+      border-color: var(--border-color-dark);
+    }
+
+    .legend-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .legend-color {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .legend-info {
+      flex: 1;
+    }
+
+    .legend-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      line-height: 1.3;
+    }
+
+    .legend-value {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .legend-hours {
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.7;
+      line-height: 1.3;
+    }
+
+    .legend-percent {
+      font-size: 13px;
+      color: var(--text-light);
+      font-weight: 600;
+      margin-inline-start: 4px;
+      line-height: 1.3;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-light);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    /* Compact Cost Summary */
+    .cost-summary {
+      background: var(--bg-off-white);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .cost-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .cost-row:last-child {
+      border-bottom: none;
+    }
+
+    .cost-row.total {
+      padding-top: 14px;
+      margin-top: 8px;
+      border-top: 2px solid var(--border-color-darker);
+      font-size: 16px;
+    }
+    
+    .cost-row.addon-header {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 2px solid var(--border-color);
+    }
+    .cost-row.addon-header .cost-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-light);
+    }
+    
+    .cost-row .cost-label.sub-item {
+      padding-inline-start: 36px;
+      font-size: 12px;
+      color: var(--text-light);
+    }
+    
+    .cost-row .cost-amount.sub-item {
+      font-size: 12px;
+      color: var(--text-light);
+    }
+
+    .cost-label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .cost-label.indent {
+      padding-inline-start: 18px;
+      font-size: 13px;
+    }
+
+    .cost-amount {
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .cost-row.total .cost-amount {
+      font-size: 26px;
+      color: var(--primary-color);
+      font-weight: 700;
+    }
+
+    /* Disclaimer */
+    .disclaimer {
+      background: var(--bg-light);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .disclaimer-text {
+      margin: 0;
+      font-size: 12px;
+      color: var(--text-light);
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    /* Compact Payment Schedule */
+    .payment-box {
+      background: var(--payment-box-bg);
+      border: 1px solid var(--payment-box-border);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .payment-title {
+      font-weight: 700;
+      color: var(--payment-box-text);
+      margin-bottom: 10px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      line-height: 1.3;
+    }
+
+    .payment-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 14px;
+      color: var(--payment-box-text);
+      line-height: 1.4;
+    }
+
+    .payment-row-label {
+      font-weight: 500;
+    }
+
+    .payment-row-amount {
+      font-weight: 700;
+    }
+
+    /* Export Button */
+    .export-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 6px;
+      background: var(--primary-color);
+      color: var(--text-on-primary);
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      line-height: 1.4;
+    }
+
+    .export-btn:hover {
+      background: var(--primary-color-dark);
+    }
+
+    .export-btn:active {
+      transform: scale(0.98);
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 16px 0 0 0;
+      font-size: 12px;
+      color: var(--text-on-primary);
+      opacity: 0.8;
+    }
+
+    /* Print Styles - UPDATED */
+    @media print {
+      @page {
+        size: A4 portrait; /* Set to A4 portrait */
+        /* Margins set to 'default' by removing the margin property */
+      }
+
+      body {
+        background: #ffffff; /* Always white for print */
+        margin: 0;
+        padding: 0;
+        font-size: 9.5pt; /* Further Reduce base font size for print */
+      }
+      
+      /* Ensure colors are not inverted in print */
+      :root {
+        --primary-color: #2F135E;
+        --primary-color-dark: #FF7A5C;
+        --accent-color: #FF7A5C;
+        --accent-color-success: #3AB795; /* Keppel Green */
+        --text-primary: #2F135E;
+        --text-secondary: #2F135E;
+        --text-muted: rgba(47, 19, 94, 0.85);
+        --text-light: rgba(47, 19, 94, 0.7);
+        --text-on-success: #ffffff;
+        --bg-white: #ffffff; 
+        --bg-light: #ffffff;
+        --bg-off-white: #ffffff;
+        --border-color: rgba(47, 19, 94, 0.2);
+        --border-color-dark: rgba(47, 19, 94, 0.3);
+        --border-color-darker: rgba(47, 19, 94, 0.4);
+        --accent-color-yellow: var(--accent-color); /* Mapped to Sunset Coral */
+        --payment-box-border: #6BAAAB;
+        --payment-box-text: #2F135E;
+        --payment-box-bg: #ffffff;
+      }
+
+      /* Reset container for printing */
+      .container {
+        max-width: 100%;
+        padding: 0; 
+        margin: 0;
+      }
+
+      /* Keep the header, but remove its border and hide the toggle */
+      .header {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin-bottom: 12px; /* Reduce margin */
+        page-break-inside: avoid;
+      }
+      
+      .header-title h1 {
+        font-size: 18px; /* Compact font */
+      }
+      .header-title p {
+        font-size: 11px; /* Compact font */
+      }
+
+      .lang-toggle {
+        display: none;
+      }
+      
+      /* Remove main card's visual styling */
+      .main-card {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      /* Hide ALL direct children of the main card by default */
+      .main-card > * {
+        display: none;
+      }
+      
+      /* EXPLICITLY show only the cost summary, payment box, and disclaimer */
+      .main-card .cost-summary,
+      .main-card .payment-box,
+      .main-card .disclaimer,
+      .footer { /* Also show the footer */
+        display: block; /* Re-show the hidden elements */
+        page-break-inside: avoid; /* Try to keep them from splitting */
+      }
+      
+      /* --- Compact Spacing Rules --- */
+      .cost-summary {
+        padding: 8px 12px; /* Compact padding */
+        margin-bottom: 8px; /* Compact margin */
+        background: var(--bg-off-white);
+        border: 1px solid var(--border-color);
+      }
+
+      .disclaimer {
+        padding: 8px; /* Compact padding */
+        margin-bottom: 8px; /* Compact margin */
+        background: var(--bg-light);
+        border: 1px solid var(--border-color);
+      }
+      .disclaimer-text {
+        font-size: 10px;
+        line-height: 1.4;
+      }
+
+      .payment-box {
+        padding: 8px 12px; /* Compact padding */
+        margin-bottom: 0; 
+        background: var(--payment-box-bg);
+        border: 1px solid var(--payment-box-border);
+      }
+      
+      .payment-title {
+        margin-bottom: 6px;
+        font-size: 11px;
+      }
+      
+      .payment-row {
+        padding: 5px 0; /* Compact padding */
+        font-size: 11px;
+      }
+      
+      .cost-row {
+        padding: 5px 0; /* Compact padding */
+        font-size: 11px;
+      }
+      
+      .cost-row.total {
+        padding-top: 8px;
+        margin-top: 8px;
+      }
+      
+      .cost-row.addon-header {
+        margin-top: 8px;
+        padding-top: 8px;
+      }
+
+      .cost-row .cost-label.sub-item,
+      .cost-row .cost-amount.sub-item {
+        font-size: 10px;
+      }
+      
+      /* Footer Print Style */
+      .footer {
+        padding-top: 15px; /* Compact padding */
+        font-size: 8pt; /* Compact font */
+        color: var(--text-primary); /* Dark color for white paper */
+        opacity: 0.7;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-title">
+        <h1 id="programTitle">مختبر المواهب</h1>
+        <p id="clientPlaceholder">مدعوم من استوديو نبلة للألعاب</p>
+      </div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="ar" id="btnAr">العربية</button> 
+        <button class="lang-btn" data-lang="en" id="btnEn">English</button>
+      </div>
+    </header>
+    <main class="main-card">
+      <div class="config-grid">
+        <section class="section">
+          <h2 class="section-title" id="participantsTitle">المشاركون</h2>
+          <div class="participant-control">
+            <button class="control-btn" id="decreaseBtn" aria-label="Decrease participants">−</button> 
+            <input type="number" id="participantsInput" class="participant-input" min="10" max="75" value="40"> 
+            <button class="control-btn" id="increaseBtn" aria-label="Increase participants">+</button>
+          </div>
+          <div class="hint-text" id="participantsHint">
+            الحد الأدنى: 10 | الحد الأقصى: 75
+          </div>
+          <div class="group-chips" id="groupChips"></div>
+        </section>
+        <section class="section">
+          <h2 class="section-title" id="addonsTitle">الإضافات الخدمية</h2>
+          <div class="addon-box" id="certificatesBox">
+            <div class="addon-header">
+              <input type="checkbox" id="certificatesCheck" class="addon-checkbox"> 
+              <label class="addon-title" id="certificatesLabel">شهادات معتمدة</label> 
+              <span class="addon-price" id="certificatesPrice">$0</span>
+            </div>
+          </div>
+          <div class="addon-box" id="digitalBookletsBox">
+            <div class="addon-header" id="digitalBookletsHeader" aria-expanded="false" aria-controls="digitalBookletsExpandable">
+              <input type="checkbox" id="digitalBookletsCheck" class="addon-checkbox"> 
+              <label class="addon-title" id="digitalBookletsLabel">كتيبات رقمية</label> 
+              <span class="addon-price" id="digitalBookletsPrice">$0</span>
+              <svg class="collapse-icon collapsed" id="digitalBookletsCollapseIcon" width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            <div class="expandable" id="digitalBookletsExpandable" role="region">
+              <div class="addon-details">
+                <div class="sub-option">
+                  <label class="sub-option-label"> 
+                    <input type="checkbox" id="digitalGuidebookCheck" class="sub-checkbox"> 
+                    <span id="digitalGuidebookLabel">Digital Games Guidebook + Talents Handbook ($500)</span> 
+                  </label>
+                </div>
+                <div class="sub-option">
+                  <label class="sub-option-label"> 
+                    <input type="checkbox" id="analogGuidebookCheck" class="sub-checkbox"> 
+                    <span id="analogGuidebookLabel">Analog Games Guidebook + Talents Handbook ($500)</span> 
+                  </label>
+                </div>
+                <div class="sub-option">
+                  <label class="sub-option-label"> 
+                    <input type="checkbox" id="digitalSlidesCheck" class="sub-checkbox"> 
+                    <span id="digitalSlidesLabel">Digital Games Workshops Slides Handouts ($300)</span> 
+                  </label>
+                </div>
+                <div class="sub-option">
+                  <label class="sub-option-label"> 
+                    <input type="checkbox" id="analogSlidesCheck" class="sub-checkbox"> 
+                    <span id="analogSlidesLabel">Analog Games Workshops Slides Handouts ($300)</span> 
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="addon-box" id="printedKitsBox">
+            <div class="addon-header" id="printedKitsHeader" aria-expanded="false" aria-controls="printedKitsExpandable">
+              <input type="checkbox" id="printedKitsCheck" class="addon-checkbox"> 
+              <label class="addon-title" id="printedKitsLabel">أطقم تصميم الألعاب المطبوعة</label> 
+              <span class="addon-price" id="printedKitsPrice">$0</span>
+              <svg class="collapse-icon collapsed" id="printedKitsCollapseIcon" width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            <div class="expandable" id="printedKitsExpandable" role="region">
+              <div class="addon-details">
+                <div class="sub-option">
+                  <label class="sub-option-label"> 
+                    <input type="checkbox" id="digitalPrintedKitCheck" class="sub-checkbox"> 
+                    <span id="digitalPrintedKitLabel">Digital Games Printed Kit ($250 each)</span> 
+                  </label>
+                  <div class="quantity-controls-wrapper" id="digitalKitQuantityWrapper">
+                    <label class="quantity-label" id="digitalKitQuantityLabel">Quantity:</label>
+                    <div class="quantity-controls">
+                      <button class="control-btn quantity-btn" id="decreaseDigitalKitBtn" aria-label="Decrease digital kits quantity">−</button> 
+                      <input type="number" id="digitalKitQuantityInput" class="quantity-input-field" min="1" value="1"> 
+                      <button class="control-btn quantity-btn" id="increaseDigitalKitBtn" aria-label="Increase digital kits quantity">+</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="sub-option">
+                  <label class="sub-option-label"> 
+                    <input type="checkbox" id="analogPrintedKitCheck" class="sub-checkbox"> 
+                    <span id="analogPrintedKitLabel">Analog Games Printed Kit ($250 each)</span> 
+                  </label>
+                  <div class="quantity-controls-wrapper" id="analogKitQuantityWrapper">
+                    <label class="quantity-label" id="analogKitQuantityLabel">Quantity:</label>
+                    <div class="quantity-controls">
+                      <button class="control-btn quantity-btn" id="decreaseAnalogKitBtn" aria-label="Decrease analog kits quantity">−</button> 
+                      <input type="number" id="analogKitQuantityInput" class="quantity-input-field" min="1" value="1"> 
+                      <button class="control-btn quantity-btn" id="increaseAnalogKitBtn" aria-label="Increase analog kits quantity">+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="addon-box" id="licensingPackBox">
+            <div class="addon-header" id="licensingPackHeader" aria-expanded="false" aria-controls="trainersExpandable">
+              <input type="checkbox" id="licensingPackCheck" class="addon-checkbox"> 
+              <label class="addon-title" id="licensingPackLabel">حزمة الترخيص</label> 
+              <span class="addon-price" id="licensingPackPrice">$0</span>
+              <svg class="collapse-icon collapsed" id="licensingPackCollapseIcon" width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            <div class="expandable" id="trainersExpandable" role="region">
+              <div class="addon-details">
+                <ul id="licensingPackList">
+                  <li>ترخيص لمدة سنة واحدة (4,200 دولار)</li>
+                  <li>تدريب المدربين (يشمل حتى 10 مدربين)</li>
+                </ul>
+                <div class="sub-option">
+                  <label class="quantity-label" id="trainersLabel">عدد المدربين:</label>
+                  <div class="quantity-controls">
+                    <button class="control-btn quantity-btn" id="decreaseTrainersBtn" aria-label="Decrease trainers quantity">−</button> 
+                    <input type="number" id="trainersInput" class="quantity-input" min="1" value="10"> 
+                    <button class="control-btn quantity-btn" id="increaseTrainersBtn" aria-label="Increase trainers quantity">+</button>
+                  </div>
+                  <div id="trainersPricingInfo" class="pricing-details-box">
+                    <div class="pricing-details-title" id="trainersInfoTitle">
+                      تفاصيل التسعير:
+                    </div>
+                    <div class="pricing-details-content">
+                      <div class="pricing-details-row">
+                        <span id="trainersBaseLabel">السعر الأساسي (حتى 10 مدربين)</span> 
+                        <span>$4,200</span>
+                      </div>
+                      <div id="trainersExtraRow" class="pricing-details-row extra">
+                        <span id="trainersExtraLabel">مدربون إضافيون (0 × $200)</span> 
+                        <span id="trainersExtraCost">$0</span>
+                      </div>
+                      <div class="pricing-details-row pricing-details-total">
+                        <span id="trainersTotalLabel">الإجمالي</span> 
+                        <span id="trainersTotalCost">$4,200</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-icon">
+            <svg width="28" height="28" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path> <circle cx="9" cy="7" r="4"></circle> <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path> <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <div class="metric-value" id="groupsCount">
+            3
+          </div>
+          <div class="metric-label" id="groupsCountLabel">
+            مجموعات
+          </div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-icon">
+            <svg width="28" height="28" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"></line> <line x1="8" y1="10" x2="8" y2="14"></line> <line x1="15" y1="13" x2="15.01" y2="13"></line> <line x1="18" y1="11" x2="18.01" y2="11"></line> <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+            </svg>
+          </div>
+          <div class="metric-value" id="totalGames">
+            5
+          </div>
+          <div class="metric-label" id="totalGamesLabel">
+            ألعاب
+          </div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-icon">
+            <svg width="28" height="28" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div class="metric-value" id="grandTotalHours">
+            380
+          </div>
+          <div class="metric-label" id="grandTotalHoursLabel">
+            ساعة تدريب
+          </div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-icon">
+            <svg width="28"height="28" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <div class="metric-value" id="totalSessions">
+            28
+          </div>
+          <div class="metric-label" id="totalSessionsLabel">
+            جلسة إرشاد
+          </div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-icon">
+            <svg width="28" height="28" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="metric-value" id="teamMembers">
+            4
+          </div>
+          <div class="metric-label" id="teamMembersLabel">
+            أعضاء الفريق
+          </div>
+        </div>
+      </div>
+      <div class="hours-breakdown" style="margin-bottom: 16px;">
+        <h3 class="hours-breakdown-title" id="gamesBreakdownTitle">تفصيل الألعاب</h3>
+        <div class="games-breakdown-grid">
+          <div class="legend-item">
+            <div class="legend-header">
+              <div class="legend-color" style="background: var(--primary-color);"></div>
+              <div class="legend-info">
+                <div class="legend-title" id="digitalGamesLabel">
+                  ألعاب رقمية
+                </div>
+                <div class="legend-value" style="color: var(--primary-color);"><span id="digitalGamesCount">3</span> <span class="legend-hours" id="digitalGamesText">ألعاب</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-header">
+              <div class="legend-color" style="background: var(--accent-color-yellow);"></div>
+              <div class="legend-info">
+                <div class="legend-title" id="analogGamesLabel">
+                  ألعاب تناظرية
+                </div>
+                <div class="legend-value" style="color: var(--accent-color-yellow);"><span id="analogGamesCount">2</span> <span class="legend-hours" id="analogGamesText">ألعاب</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hours-breakdown">
+        <h3 class="hours-breakdown-title" id="hoursBreakdownTitle">توزيع ساعات التدريب</h3>
+        <div class="hours-content">
+          <div class="pie-container">
+            <canvas id="pieChart" width="220" height="220"></canvas>
+            <div class="pie-center">
+              <div class="pie-total" id="pieChartTotal">
+                380
+              </div>
+              <div class="pie-label" id="pieChartLabel">
+                ساعة
+              </div>
+            </div>
+          </div>
+          <div class="legend-items">
+            <div class="legend-item">
+              <div class="legend-header">
+                <div class="legend-color" style="background: var(--accent-color-blue);"></div>
+                <div class="legend-info">
+                  <div class="legend-title" id="onlineHoursLabel">
+                    عبر الإنترنت
+                  </div>
+                  <div class="legend-value" style="color: var(--accent-color-blue);"><span id="totalOnline">60</span> <span class="legend-hours" id="onlineHoursText">ساعة</span> <span class="legend-percent" id="onlinePercent">(16%)</span>
+                  </div>
+                </div>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="onlineProgressBar" style="width: 16%; background: var(--accent-color-blue);"></div>
+              </div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-header">
+                <div class="legend-color" style="background: var(--accent-color);"></div>
+                <div class="legend-info">
+                  <div class="legend-title" id="onsiteHoursLabel">
+                    في الموقع
+                  </div>
+                  <div class="legend-value" style="color: var(--accent-color);"><span id="totalOnsite">264</span> <span class="legend-hours" id="onsiteHoursText">ساعة</span> <span class="legend-percent" id="onsitePercent">(69%)</span>
+                  </div>
+                </div>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="onsiteProgressBar" style="width: 69%; background: var(--accent-color);"></div>
+              </div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-header">
+                <div class="legend-color" style="background: var(--accent-color-orange);"></div>
+                <div class="legend-info">
+                  <div class="legend-title" id="mentoringHoursLabel">
+                    جلسات الإرشاد
+                  </div>
+                  <div class="legend-value" style="color: var(--accent-color-orange);"><span id="mentoringTotal">56</span> <span class="legend-hours" id="mentoringHoursText">ساعة</span> <span class="legend-percent" id="mentoringPercent">(15%)</span>
+                  </div>
+                </div>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="mentoringProgressBar" style="width: 15%; background: var(--accent-color-orange);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cost-summary">
+        <div id="costRows"></div>
+      </div>
+      <div class="disclaimer">
+        <p class="disclaimer-text" id="disclaimerText">هذا العرض صالح لمدة 90 يومًا ولا يشمل ضريبة القيمة المضافة إن وجدت.</p>
+      </div>
+      <div class="payment-box">
+        <div class="payment-title" id="paymentScheduleTitle">
+          جدول الدفع
+        </div>
+        <div id="paymentScheduleItems"></div>
+      </div>
+      <button class="export-btn" onclick="exportPDF()">
+        <svg width="18" height="18" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path> <polyline points="14 2 14 8 20 8"></polyline> <line x1="16" y1="13" x2="8" y2="13"></line> <line x1="16" y1="17" x2="8" y2="17"></line> <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span id="exportBtnText">تصدير فاتورة</span> 
+      </button>
+    </main>
+    
+    <footer class="footer">
+      Nibla Games Studio. All rights reserved <span id="copyrightYear"></span> ©
+    </footer>
+  </div>
+  <script>
+    // Configuration object
+    const defaultConfig = {
+      program_title_ar: 'مختبر المواهب',
+      program_title_en: 'Talents Lab',
+      client_placeholder_ar: 'مدعوم من استوديو نبلة للألعاب',
+      client_placeholder_en: 'Powered by Nibla Games Studio',
+      primary_color: '#2F135E',   // Deep Violet
+      secondary_color: '#FF9C7B', // Peach Glow
+      text_color: '#2F135E',
+      background_color: '#FCE3D3', // Warm Beige
+      accent_color: '#FF7A5C'    // Sunset Coral
+      // Note: The new accent colors (#6BAAAB, #3AB795) are hard-coded in the CSS
+      // but the main ones are here for the SDK.
+    };
+
+    // Translations
+    const translations = {
+      ar: {
+        programTitle: 'مختبر المواهب',
+        clientPlaceholder: 'مدعوم من استوديو نبلة للألعاب',
+        participantsTitle: 'المشاركون',
+        addonsTitle: 'الإضافات الخدمية',
+        participantsLabel: 'عدد المشاركين',
+        participantsHint: 'الحد الأدنى: 10 | الحد الأقصى: 75',
+        participantsError: 'يجب أن يكون العدد بين 10 و 75',
+        groupDistribution: 'توزيع المجموعات',
+        groupLabel: 'مجموعة',
+        participantsPerGroup: 'مشارك',
+        digitalBookletsLabel: 'كتيبات رقمية',
+        printedKitsLabel: 'أطقم تصميم الألعاب المطبوعة',
+        digitalPrintedKitLabel: 'طقم الألعاب الرقمية المطبوع (250 دولار لكل طقم)',
+        analogPrintedKitLabel: 'طقم الألعاب التناظرية المطبوع (250 دولار لكل طقم)',
+        digitalKitQuantityLabel: 'الكمية:',
+        analogKitQuantityLabel: 'الكمية:',
+        certificatesLabel: 'شهادات معتمدة',
+        digitalGuidebookLabel: 'دليل الألعاب الرقمية + دليل المواهب (500 دولار)',
+        analogGuidebookLabel: 'دليل الألعاب التناظرية + دليل المواهب (500 دولار)',
+        digitalSlidesLabel: 'عروض ورش الألعاب الرقمية (300 دولار)',
+        analogSlidesLabel: 'عروض ورش الألعاب التناظرية (300 دولار)',
+        licensingPackLabel: 'حزمة الترخيص',
+        licensingPackList: [
+          'ترخيص تدريب T.Lab لمدة سنة واحدة + دليل المدرب (4,200 دولار)',
+          'تدريب المدربين (يشمل حتى 10 مدربين)'
+        ],
+        trainersLabel: 'عدد المدربين:',
+        trainersInfoTitle: 'تفاصيل التسعير:',
+        trainersBaseLabel: 'السعر الأساسي (حتى 10 مدربين)',
+        trainersExtraLabel: 'مدربون إضافيون',
+        trainersTotalLabel: 'الإجمالي',
+        outputsTitle: 'النتائج',
+        groupsCountLabel: 'مجموعات',
+        totalGamesLabel: 'ألعاب',
+        grandTotalHoursLabel: 'ساعة تدريب', // REVERTED
+        totalSessionsLabel: 'جلسة إرشاد',
+        teamMembersLabel: 'أعضاء الفريق',
+        gamesBreakdownTitle: 'تفصيل الألعاب',
+        analogGamesLabel: 'ألعاب تناظرية',
+        digitalGamesLabel: 'ألعاب رقمية',
+        digitalGamesText: 'ألعاب',
+        analogGamesText: 'ألعاب',
+        hoursTitle: 'ساعات التدريب',
+        hoursBreakdownTitle: 'توزيع ساعات التدريب',
+        onlineHoursLabel: 'عبر الإنترنت',
+        onsiteHoursLabel: 'في الموقع',
+        mentoringHoursLabel: 'جلسات الإرشاد',
+        hoursTotalLabel: 'إجمالي ساعات البرنامج',
+        hoursText: 'ساعة',
+        costTitle: 'تفصيل التكاليف',
+        itemHeader: 'البند',
+        amountHeader: 'المبلغ',
+        trainingCostItem: 'تكلفة التدريب',
+        knowledgePackItem: 'حزمة المعرفة',
+        bookletsItem: 'كتيبات رقمية',
+        digitalGuidebookItem: 'دليل الألعاب الرقمية + دليل المواهب',
+        analogGuidebookItem: 'دليل الألعاب التناظرية + دليل المواهB',
+        digitalSlidesItem: 'عروض ورش الألعاب الرقمية',
+        analogSlidesItem: 'عروض ورش الألعاب التناظرية',
+        printedKitsItem: 'أطقم تصميم الألعاب المطبوعة',
+        digitalPrintedKitItem: 'طقم الألعاب الرقمية المطبوع',
+        analogPrintedKitItem: 'طقم الألعاب التناظرية المطبوع',
+        certificatesItem: 'شهادات معتمدة',
+        licensingPackItem: 'حزمة الترخيص',
+        licenseBaseItem: 'ترخيص لمدة سنة واحدة + تدريب المدربين (10 مدربين)',
+        extraTrainersItem: 'مدربون إضافيون',
+        totalItem: 'الإجمالي',
+        disclaimerText: 'هذا العرض صالح لمدة 90 يومًا ولا يشمل ضريبة القيمة المضافة إن وجدت.',
+        paymentScheduleTitle: 'جدول الدفع',
+        paymentOnline: 'قبل التدريب عبر الإنترنت',
+        paymentOnsite: 'قبل التدريب في الموقع',
+        paymentMentoring: 'قبل جلسات الإرشاد',
+        paymentToT: 'قبل تدريب المدربين',
+        paymentUpfront: 'عند توقيع الاتفاقية',
+        exportBtnText: 'تصدير فاتورة', // UPDATED
+        hours: 'ساعة',
+        hoursShort: 'س'
+      },
+      en: {
+        programTitle: 'Talents Lab',
+        clientPlaceholder: 'Powered by Nibla Games Studio',
+        participantsTitle: 'Participants',
+        addonsTitle: 'Service Add-ons',
+        participantsLabel: 'Number of Participants',
+        participantsHint: 'Min: 10 | Max: 75',
+        participantsError: 'Must be between 10 and 75',
+        groupDistribution: 'Group Distribution',
+        groupLabel: 'Group',
+        participantsPerGroup: 'participants',
+        digitalBookletsLabel: 'Digital Booklets',
+        printedKitsLabel: 'Printed Game Design Kits',
+        digitalPrintedKitLabel: 'Digital Games Printed Kit ($250 each)',
+        analogPrintedKitLabel: 'Analog Games Printed Kit ($250 each)',
+        digitalKitQuantityLabel: 'Quantity:',
+        analogKitQuantityLabel: 'Quantity:',
+        certificatesLabel: 'Authorized Certificates',
+        digitalGuidebookLabel: 'Digital Games Guidebook + Talents Handbook ($500)',
+        analogGuidebookLabel: 'Analog Games Guidebook + Talents Handbook ($500)',
+        digitalSlidesLabel: 'Digital Games Workshops Slides Handouts ($300)',
+        analogSlidesLabel: 'Analog Games Workshops Slides Handouts ($300)',
+        licensingPackLabel: 'Licensing Pack',
+        licensingPackList: [
+          '1-Year T.Lab Training License + Trainer Handbook ($4,200)',
+          'Training of Trainers (includes up to 10 trainers)'
+        ],
+        trainersLabel: 'Number of Trainers:',
+        trainersInfoTitle: 'Pricing Details:',
+        trainersBaseLabel: 'Base Price (up to 10 trainers)',
+        trainersExtraLabel: 'Additional Trainers',
+        trainersTotalLabel: 'Total',
+        outputsTitle: 'Outputs',
+        groupsCountLabel: 'Groups',
+        totalGamesLabel: 'Games',
+        grandTotalHoursLabel: 'Training Hours', // REVERTED
+        totalSessionsLabel: 'Mentoring Sessions',
+        teamMembersLabel: 'Team Members',
+        gamesBreakdownTitle: 'Games Breakdown',
+        analogGamesLabel: 'Analog Games',
+        digitalGamesLabel: 'Digital Games',
+        digitalGamesText: 'games',
+        analogGamesText: 'games',
+        hoursTitle: 'Training Hours',
+        hoursBreakdownTitle: 'Training Hours Breakdown',
+        onlineHoursLabel: 'Online',
+        onsiteHoursLabel: 'On-Site',
+        mentoringHoursLabel: 'Mentoring Sessions',
+        hoursTotalLabel: 'Total Program Hours',
+        hoursText: 'hours',
+        costTitle: 'Cost Breakdown',
+        itemHeader: 'Item',
+        amountHeader: 'Amount',
+        trainingCostItem: 'Training Cost',
+        knowledgePackItem: 'Knowledge Pack',
+        bookletsItem: 'Digital Booklets',
+        digitalGuidebookItem: 'Digital Games Guidebook + Talents Handbook',
+        analogGuidebookItem: 'Analog Games Guidebook + Talents Handbook',
+        digitalSlidesItem: 'Digital Games Workshops Slides Handouts',
+        analogSlidesItem: 'Analog Games Workshops Slides Handouts',
+        printedKitsItem: 'Printed Game Design Kits',
+        digitalPrintedKitItem: 'Digital Games Printed Kit',
+        analogPrintedKitItem: 'Analog Games Printed Kit',
+        certificatesItem: 'Authorized Certificates',
+        licensingPackItem: 'Licensing Pack',
+        licenseBaseItem: '1-Year License + Training of Trainers (10 trainers)',
+        extraTrainersItem: 'Additional Trainers',
+        totalItem: 'Total',
+        disclaimerText: 'This offer is valid for 90 days and excludes Value Added Taxes if applicable.',
+        paymentScheduleTitle: 'Payment Schedule',
+        paymentOnline: 'Before Online Training',
+        paymentOnsite: 'Before On-Site Training',
+        paymentMentoring: 'Before Mentoring Sessions',
+        paymentToT: 'Before Training of Trainers',
+        paymentUpfront: 'At Agreement Signing',
+        exportBtnText: 'Export Invoice', // UPDATED
+        hours: 'hours',
+        hoursShort: 'h'
+      }
+    };
+
+    let currentLang = 'ar';
+    let state = {
+      participants: 40,
+      digitalBooklets: false,
+      printedKits: false,
+      digitalPrintedKit: false,
+      analogPrintedKit: false,
+      digitalKitQuantity: 1,
+      analogKitQuantity: 1,
+      certificates: false,
+      licensingPack: false,
+      trainers: 10,
+      digitalGuidebook: false,
+      analogGuidebook: false,
+      digitalSlides: false,
+      analogSlides: false
+    };
+
+    // Update button states based on limits
+    function updateParticipantButtons() {
+      const decreaseBtn = document.getElementById('decreaseBtn');
+      const increaseBtn = document.getElementById('increaseBtn');
+      
+      decreaseBtn.disabled = state.participants <= 10;
+      increaseBtn.disabled = state.participants >= 75;
+    }
+
+    function updateDigitalKitButtons() {
+      const decreaseBtn = document.getElementById('decreaseDigitalKitBtn');
+      decreaseBtn.disabled = state.digitalKitQuantity <= 1;
+    }
+
+    function updateAnalogKitButtons() {
+      const decreaseBtn = document.getElementById('decreaseAnalogKitBtn');
+      decreaseBtn.disabled = state.analogKitQuantity <= 1;
+    }
+
+    function updateTrainersButtons() {
+      const decreaseBtn = document.getElementById('decreaseTrainersBtn');
+      decreaseBtn.disabled = state.trainers <= 1;
+    }
+
+    // Toggle collapse for add-ons
+    function toggleCollapse(addonName) {
+      const expandableId = addonName === 'licensingPack' ? 'trainersExpandable' : `${addonName}Expandable`;
+      const expandable = document.getElementById(expandableId);
+      const icon = document.getElementById(`${addonName}CollapseIcon`);
+      const header = document.getElementById(`${addonName}Header`);
+      const checkbox = document.getElementById(`${addonName}Check`);
+      
+      // Only allow toggling if the checkbox is checked
+      if (!checkbox.checked) return;
+      
+      const isOpen = expandable.classList.contains('open');
+      
+      if (isOpen) {
+        expandable.classList.remove('open');
+        icon.classList.add('collapsed');
+        header.setAttribute('aria-expanded', 'false');
+      } else {
+        // Close all other expandables first
+        closeAllExpandables(addonName);
+        
+        expandable.classList.add('open');
+        icon.classList.remove('collapsed');
+        header.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    // Close all expandable sections except the specified one
+    function closeAllExpandables(exceptAddon) {
+      const addons = ['digitalBooklets', 'printedKits', 'licensingPack'];
+      
+      addons.forEach(addon => {
+        if (addon !== exceptAddon) {
+          const expandableId = addon === 'licensingPack' ? 'trainersExpandable' : `${addon}Expandable`;
+          const expandable = document.getElementById(expandableId);
+          const icon = document.getElementById(`${addon}CollapseIcon`);
+          const header = document.getElementById(`${addon}Header`);
+          
+          if (expandable && expandable.classList.contains('open')) {
+            expandable.classList.remove('open');
+            icon.classList.add('collapsed');
+            header.setAttribute('aria-expanded', 'false');
+          }
+        }
+      });
+    }
+
+    // Open an addon box and close all others
+    function openAddonBox(addonName) {
+      const checkbox = document.getElementById(`${addonName}Check`);
+      
+      // Only proceed if checkbox is checked
+      if (!checkbox.checked) return;
+      
+      // Close all other expandables first
+      closeAllExpandables(addonName);
+      
+      // Open this one
+      const expandableId = addonName === 'licensingPack' ? 'trainersExpandable' : `${addonName}Expandable`;
+      const expandable = document.getElementById(expandableId);
+      const icon = document.getElementById(`${addonName}CollapseIcon`);
+      const header = document.getElementById(`${addonName}Header`);
+      
+      expandable.classList.add('open');
+      icon.classList.remove('collapsed');
+      header.setAttribute('aria-expanded', 'true');
+    }
+
+    // Update icon disabled state
+    function updateCollapseIconState(addonName, isChecked) {
+      const icon = document.getElementById(`${addonName}CollapseIcon`);
+      
+      if (isChecked) {
+        icon.classList.remove('disabled');
+      } else {
+        icon.classList.add('disabled');
+      }
+    }
+
+    // Update Digital Booklets checkbox state based on sub-items
+    function updateDigitalBookletsCheckbox() {
+      const checkbox = document.getElementById('digitalBookletsCheck');
+      const allSubItems = [
+        state.digitalGuidebook,
+        state.analogGuidebook,
+        state.digitalSlides,
+        state.analogSlides
+      ];
+      
+      const checkedCount = allSubItems.filter(item => item).length;
+      
+      if (checkedCount === 0) {
+        // None selected - uncheck main checkbox
+        checkbox.checked = false;
+        checkbox.indeterminate = false;
+        checkbox.classList.remove('indeterminate');
+        state.digitalBooklets = false;
+        document.getElementById('digitalBookletsBox').classList.remove('active');
+      } else if (checkedCount === allSubItems.length) {
+        // All selected - check main checkbox
+        checkbox.checked = true;
+        checkbox.indeterminate = false;
+        checkbox.classList.remove('indeterminate');
+        state.digitalBooklets = true;
+        document.getElementById('digitalBookletsBox').classList.add('active');
+      } else {
+        // Some selected - show indeterminate state
+        checkbox.checked = true;
+        checkbox.indeterminate = true;
+        checkbox.classList.add('indeterminate');
+        state.digitalBooklets = true;
+        document.getElementById('digitalBookletsBox').classList.add('active');
+      }
+    }
+
+    // Update Printed Kits checkbox state based on sub-items
+    function updatePrintedKitsCheckbox() {
+      const checkbox = document.getElementById('printedKitsCheck');
+      const allSubItems = [
+        state.digitalPrintedKit,
+        state.analogPrintedKit
+      ];
+      
+      const checkedCount = allSubItems.filter(item => item).length;
+      
+      if (checkedCount === 0) {
+        // None selected - uncheck main checkbox
+        checkbox.checked = false;
+        checkbox.indeterminate = false;
+        checkbox.classList.remove('indeterminate');
+        state.printedKits = false;
+        document.getElementById('printedKitsBox').classList.remove('active');
+      } else if (checkedCount === allSubItems.length) {
+        // All selected - check main checkbox
+        checkbox.checked = true;
+        checkbox.indeterminate = false;
+        checkbox.classList.remove('indeterminate');
+        state.printedKits = true;
+        document.getElementById('printedKitsBox').classList.add('active');
+      } else {
+        // Some selected - show indeterminate state
+        checkbox.checked = true;
+        checkbox.indeterminate = true;
+        checkbox.classList.add('indeterminate');
+        state.printedKits = true;
+        document.getElementById('printedKitsBox').classList.add('active');
+      }
+    }
+
+    // Update trainers pricing display
+    function updateTrainersPricing() {
+      const t = translations[currentLang];
+      const trainers = state.trainers;
+      const extraTrainers = Math.max(0, trainers - 10);
+      const extraCost = extraTrainers * 200;
+      const totalCost = 4200 + extraCost;
+
+      // Update extra trainers row
+      const extraRow = document.getElementById('trainersExtraRow');
+      if (extraTrainers > 0) {
+        extraRow.style.display = 'flex'; // Use flex to match other rows
+        const extraLabel = currentLang === 'ar' 
+          ? `مدربون إضافيون (${extraTrainers} × $200)`
+          : `Additional Trainers (${extraTrainers} × $200)`;
+        document.getElementById('trainersExtraLabel').textContent = extraLabel;
+        document.getElementById('trainersExtraCost').textContent = `$${extraCost.toLocaleString()}`;
+      } else {
+        extraRow.style.display = 'none';
+      }
+
+      // Update total
+      document.getElementById('trainersTotalCost').textContent = `$${totalCost.toLocaleString()}`;
+    }
+
+    // Initialize
+    function init() {
+      setupEventListeners();
+      updateParticipantButtons();
+      updateDigitalKitButtons();
+      updateAnalogKitButtons();
+      updateTrainersButtons();
+      updateTrainersPricing();
+      
+      // Initialize disabled states for collapse icons
+      updateCollapseIconState('digitalBooklets', false);
+      updateCollapseIconState('printedKits', false);
+      updateCollapseIconState('licensingPack', false);
+      
+      // Set Copyright Year
+      document.getElementById('copyrightYear').textContent = new Date().getFullYear();
+      
+      calculate();
+      updateLanguage('ar');
+    }
+
+    function setupEventListeners() {
+      document.getElementById('btnAr').addEventListener('click', () => switchLanguage('ar'));
+      document.getElementById('btnEn').addEventListener('click', () => switchLanguage('en'));
+      
+      // Collapse toggle handlers - only on icon click
+      document.getElementById('digitalBookletsCollapseIcon').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleCollapse('digitalBooklets');
+      });
+      
+      document.getElementById('printedKitsCollapseIcon').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleCollapse('printedKits');
+      });
+      
+      document.getElementById('licensingPackCollapseIcon').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleCollapse('licensingPack');
+      });
+
+      // Click handlers on addon headers to toggle collapse (but not on checkbox clicks)
+      document.getElementById('digitalBookletsHeader').addEventListener('click', (e) => {
+        // Don't trigger if clicking the checkbox itself
+        if (e.target.id === 'digitalBookletsCheck' || e.target.closest('#digitalBookletsCheck')) return;
+        // Don't trigger if clicking the icon (it has its own handler)
+        if (e.target.closest('.collapse-icon')) return;
+        toggleCollapse('digitalBooklets');
+      });
+      
+      document.getElementById('printedKitsHeader').addEventListener('click', (e) => {
+        // Don't trigger if clicking the checkbox itself
+        if (e.target.id === 'printedKitsCheck' || e.target.closest('#printedKitsCheck')) return;
+        // Don't trigger if clicking the icon (it has its own handler)
+        if (e.target.closest('.collapse-icon')) return;
+        toggleCollapse('printedKits');
+      });
+      
+      document.getElementById('licensingPackHeader').addEventListener('click', (e) => {
+        // Don't trigger if clicking the checkbox itself
+        if (e.target.id === 'licensingPackCheck' || e.target.closest('#licensingPackCheck')) return;
+        // Don't trigger if clicking the icon (it has its own handler)
+        if (e.target.closest('.collapse-icon')) return;
+        toggleCollapse('licensingPack');
+      });
+
+      document.getElementById('participantsInput').addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        if (!isNaN(value)) {
+          state.participants = value;
+          updateParticipantButtons();
+          calculate();
+        }
+      });
+
+      document.getElementById('participantsInput').addEventListener('blur', (e) => {
+        let value = parseInt(e.target.value);
+        if (isNaN(value) || value < 10) {
+          value = 10;
+        } else if (value > 75) {
+          value = 75;
+        }
+        e.target.value = value;
+        state.participants = value;
+        updateParticipantButtons();
+        calculate();
+      });
+
+      document.getElementById('decreaseBtn').addEventListener('click', () => {
+        const input = document.getElementById('participantsInput');
+        const currentValue = parseInt(input.value) || 40;
+        const newValue = Math.max(10, currentValue - 5);
+        input.value = newValue;
+        state.participants = newValue;
+        updateParticipantButtons();
+        calculate();
+      });
+
+      document.getElementById('increaseBtn').addEventListener('click', () => {
+        const input = document.getElementById('participantsInput');
+        const currentValue = parseInt(input.value) || 40;
+        const newValue = Math.min(75, currentValue + 5);
+        input.value = newValue;
+        state.participants = newValue;
+        updateParticipantButtons();
+        calculate();
+      });
+
+      document.getElementById('digitalBookletsCheck').addEventListener('change', (e) => {
+        state.digitalBooklets = e.target.checked;
+        document.getElementById('digitalBookletsBox').classList.toggle('active', e.target.checked);
+        const expandable = document.getElementById('digitalBookletsExpandable');
+        const icon = document.getElementById('digitalBookletsCollapseIcon');
+        const header = document.getElementById('digitalBookletsHeader');
+        
+        updateCollapseIconState('digitalBooklets', e.target.checked);
+        
+        if (e.target.checked) {
+          // Close all other expandables first
+          closeAllExpandables('digitalBooklets');
+          
+          expandable.classList.add('open');
+          icon.classList.remove('collapsed');
+          header.setAttribute('aria-expanded', 'true');
+          
+          // Auto-select all sub-items when checking Digital Booklets
+          document.getElementById('digitalGuidebookCheck').checked = true;
+          state.digitalGuidebook = true;
+          document.getElementById('analogGuidebookCheck').checked = true;
+          state.analogGuidebook = true;
+          document.getElementById('digitalSlidesCheck').checked = true;
+          state.digitalSlides = true;
+          document.getElementById('analogSlidesCheck').checked = true;
+          state.analogSlides = true;
+        } else {
+          expandable.classList.remove('open');
+          icon.classList.add('collapsed');
+          header.setAttribute('aria-expanded', 'false');
+          
+          // *** FIX: Uncheck all sub-items in state and DOM ***
+          document.getElementById('digitalGuidebookCheck').checked = false;
+          state.digitalGuidebook = false;
+          document.getElementById('analogGuidebookCheck').checked = false;
+          state.analogGuidebook = false;
+          document.getElementById('digitalSlidesCheck').checked = false;
+          state.digitalSlides = false;
+          document.getElementById('analogSlidesCheck').checked = false;
+          state.analogSlides = false;
+        }
+        
+        calculate();
+      });
+
+      document.getElementById('certificatesCheck').addEventListener('change', (e) => {
+        state.certificates = e.target.checked;
+        document.getElementById('certificatesBox').classList.toggle('active', e.target.checked);
+        
+        calculate();
+      });
+
+      document.getElementById('digitalGuidebookCheck').addEventListener('change', (e) => {
+        state.digitalGuidebook = e.target.checked;
+        updateDigitalBookletsCheckbox();
+        calculate();
+      });
+
+      document.getElementById('analogGuidebookCheck').addEventListener('change', (e) => {
+        state.analogGuidebook = e.target.checked;
+        updateDigitalBookletsCheckbox();
+        calculate();
+      });
+
+      document.getElementById('digitalSlidesCheck').addEventListener('change', (e) => {
+        state.digitalSlides = e.target.checked;
+        updateDigitalBookletsCheckbox();
+        calculate();
+      });
+
+      document.getElementById('analogSlidesCheck').addEventListener('change', (e) => {
+        state.analogSlides = e.target.checked;
+        updateDigitalBookletsCheckbox();
+        calculate();
+      });
+
+      document.getElementById('printedKitsCheck').addEventListener('change', (e) => {
+        state.printedKits = e.target.checked;
+        document.getElementById('printedKitsBox').classList.toggle('active', e.target.checked);
+        const expandable = document.getElementById('printedKitsExpandable');
+        const icon = document.getElementById('printedKitsCollapseIcon');
+        const header = document.getElementById('printedKitsHeader');
+        
+        updateCollapseIconState('printedKits', e.target.checked);
+        
+        if (e.target.checked) {
+          // Close all other expandables first
+          closeAllExpandables('printedKits');
+          
+          expandable.classList.add('open');
+          icon.classList.remove('collapsed');
+          header.setAttribute('aria-expanded', 'true');
+          
+          // Auto-select all sub-items when checking Printed Kits
+          document.getElementById('digitalPrintedKitCheck').checked = true;
+          state.digitalPrintedKit = true;
+          const digitalWrapper = document.getElementById('digitalKitQuantityWrapper');
+          digitalWrapper.style.display = 'block';
+          setTimeout(() => digitalWrapper.style.opacity = '1', 10);
+          
+          document.getElementById('analogPrintedKitCheck').checked = true;
+          state.analogPrintedKit = true;
+          const analogWrapper = document.getElementById('analogKitQuantityWrapper');
+          analogWrapper.style.display = 'block';
+          setTimeout(() => analogWrapper.style.opacity = '1', 10);
+        } else {
+          expandable.classList.remove('open');
+          icon.classList.add('collapsed');
+          header.setAttribute('aria-expanded', 'false');
+
+          // *** FIX: Uncheck all sub-items in state and DOM ***
+          document.getElementById('digitalPrintedKitCheck').checked = false;
+          state.digitalPrintedKit = false;
+          const digitalWrapper = document.getElementById('digitalKitQuantityWrapper');
+          digitalWrapper.style.opacity = '0';
+          setTimeout(() => digitalWrapper.style.display = 'none', 200);
+
+          document.getElementById('analogPrintedKitCheck').checked = false;
+          state.analogPrintedKit = false;
+          const analogWrapper = document.getElementById('analogKitQuantityWrapper');
+          analogWrapper.style.opacity = '0';
+          setTimeout(() => analogWrapper.style.display = 'none', 200);
+        }
+        
+        calculate();
+      });
+
+      document.getElementById('digitalPrintedKitCheck').addEventListener('change', (e) => {
+        state.digitalPrintedKit = e.target.checked;
+        const wrapper = document.getElementById('digitalKitQuantityWrapper');
+        if (e.target.checked) {
+          wrapper.style.display = 'block';
+          setTimeout(() => wrapper.style.opacity = '1', 10);
+        } else {
+          wrapper.style.opacity = '0';
+          setTimeout(() => wrapper.style.display = 'none', 200);
+        }
+        updatePrintedKitsCheckbox();
+        calculate();
+      });
+
+      document.getElementById('analogPrintedKitCheck').addEventListener('change', (e) => {
+        state.analogPrintedKit = e.target.checked;
+        const wrapper = document.getElementById('analogKitQuantityWrapper');
+        if (e.target.checked) {
+          wrapper.style.display = 'block';
+          setTimeout(() => wrapper.style.opacity = '1', 10);
+        } else {
+          wrapper.style.opacity = '0';
+          setTimeout(() => wrapper.style.display = 'none', 200);
+        }
+        updatePrintedKitsCheckbox();
+        calculate();
+      });
+
+      document.getElementById('digitalKitQuantityInput').addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        if (!isNaN(value)) {
+          state.digitalKitQuantity = value;
+          updateDigitalKitButtons();
+          calculate();
+        }
+      });
+
+      document.getElementById('digitalKitQuantityInput').addEventListener('blur', (e) => {
+        let value = parseInt(e.target.value);
+        if (isNaN(value) || value < 1) {
+          value = 1;
+        }
+        e.target.value = value;
+        state.digitalKitQuantity = value;
+        updateDigitalKitButtons();
+        calculate();
+      });
+
+      document.getElementById('decreaseDigitalKitBtn').addEventListener('click', () => {
+        const input = document.getElementById('digitalKitQuantityInput');
+        const currentValue = parseInt(input.value) || 1;
+        const newValue = Math.max(1, currentValue - 1);
+        input.value = newValue;
+        state.digitalKitQuantity = newValue;
+        updateDigitalKitButtons();
+        calculate();
+      });
+
+      document.getElementById('increaseDigitalKitBtn').addEventListener('click', () => {
+        const input = document.getElementById('digitalKitQuantityInput');
+        const currentValue = parseInt(input.value) || 1;
+        const newValue = currentValue + 1;
+        input.value = newValue;
+        state.digitalKitQuantity = newValue;
+        updateDigitalKitButtons();
+        calculate();
+      });
+
+      document.getElementById('analogKitQuantityInput').addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        if (!isNaN(value)) {
+          state.analogKitQuantity = value;
+          updateAnalogKitButtons();
+          calculate();
+        }
+      });
+
+      document.getElementById('analogKitQuantityInput').addEventListener('blur', (e) => {
+        let value = parseInt(e.target.value);
+        if (isNaN(value) || value < 1) {
+          value = 1;
+        }
+        e.target.value = value;
+        state.analogKitQuantity = value;
+        updateAnalogKitButtons();
+        calculate();
+      });
+
+      document.getElementById('decreaseAnalogKitBtn').addEventListener('click', () => {
+        const input = document.getElementById('analogKitQuantityInput');
+        const currentValue = parseInt(input.value) || 1;
+        const newValue = Math.max(1, currentValue - 1);
+        input.value = newValue;
+        state.analogKitQuantity = newValue;
+        updateAnalogKitButtons();
+        calculate();
+      });
+
+      document.getElementById('increaseAnalogKitBtn').addEventListener('click', () => {
+        const input = document.getElementById('analogKitQuantityInput');
+        const currentValue = parseInt(input.value) || 1;
+        const newValue = currentValue + 1;
+        input.value = newValue;
+        state.analogKitQuantity = newValue;
+        updateAnalogKitButtons();
+        calculate();
+      });
+
+      document.getElementById('licensingPackCheck').addEventListener('change', (e) => {
+        state.licensingPack = e.target.checked;
+        document.getElementById('licensingPackBox').classList.toggle('active', e.target.checked);
+        const expandable = document.getElementById('trainersExpandable');
+        const icon = document.getElementById('licensingPackCollapseIcon');
+        const header = document.getElementById('licensingPackHeader');
+        
+        updateCollapseIconState('licensingPack', e.target.checked);
+        
+        if (e.target.checked) {
+          // Close all other expandables first
+          closeAllExpandables('licensingPack');
+          
+          expandable.classList.add('open');
+          icon.classList.remove('collapsed');
+          header.setAttribute('aria-expanded', 'true');
+        } else {
+          expandable.classList.remove('open');
+          icon.classList.add('collapsed');
+          header.setAttribute('aria-expanded', 'false');
+        }
+        
+        calculate();
+      });
+
+      document.getElementById('trainersInput').addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        if (!isNaN(value)) {
+          state.trainers = value;
+          updateTrainersButtons();
+          updateTrainersPricing();
+          calculate();
+        }
+      });
+
+      document.getElementById('trainersInput').addEventListener('blur', (e) => {
+        let value = parseInt(e.target.value);
+        if (isNaN(value) || value < 1) {
+          value = 1;
+        }
+        e.target.value = value;
+        state.trainers = value;
+        updateTrainersButtons();
+        updateTrainersPricing();
+        calculate();
+      });
+
+      document.getElementById('decreaseTrainersBtn').addEventListener('click', () => {
+        const input = document.getElementById('trainersInput');
+        const currentValue = parseInt(input.value) || 10;
+        const newValue = Math.max(1, currentValue - 1);
+        input.value = newValue;
+        state.trainers = newValue;
+        updateTrainersButtons();
+        updateTrainersPricing();
+        calculate();
+      });
+
+      document.getElementById('increaseTrainersBtn').addEventListener('click', () => {
+        const input = document.getElementById('trainersInput');
+        const currentValue = parseInt(input.value) || 10;
+        const newValue = currentValue + 1;
+        input.value = newValue;
+        state.trainers = newValue;
+        updateTrainersButtons();
+        updateTrainersPricing();
+        calculate();
+      });
+    }
+
+    function switchLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      
+      document.getElementById('btnAr').classList.toggle('active', lang === 'ar');
+      document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+      
+      updateLanguage(lang);
+      calculate();
+    }
+
+    function updateLanguage(lang) {
+      const t = translations[lang];
+      
+      document.getElementById('programTitle').textContent = 
+        lang === 'ar' ? (window.elementSdk?.config?.program_title_ar || defaultConfig.program_title_ar) 
+                      : (window.elementSdk?.config?.program_title_en || defaultConfig.program_title_en);
+      
+      document.getElementById('clientPlaceholder').textContent = 
+        lang === 'ar' ? (window.elementSdk?.config?.client_placeholder_ar || defaultConfig.client_placeholder_ar)
+                      : (window.elementSdk?.config?.client_placeholder_en || defaultConfig.client_placeholder_en);
+      
+      document.getElementById('participantsTitle').textContent = t.participantsTitle;
+      document.getElementById('addonsTitle').textContent = t.addonsTitle;
+      document.getElementById('participantsHint').textContent = t.participantsHint;
+      document.getElementById('digitalBookletsLabel').textContent = t.digitalBookletsLabel;
+      document.getElementById('printedKitsLabel').textContent = t.printedKitsLabel;
+      document.getElementById('digitalPrintedKitLabel').textContent = t.digitalPrintedKitLabel;
+      document.getElementById('analogPrintedKitLabel').textContent = t.analogPrintedKitLabel;
+      document.getElementById('digitalKitQuantityLabel').textContent = t.digitalKitQuantityLabel;
+      document.getElementById('analogKitQuantityLabel').textContent = t.analogKitQuantityLabel;
+      document.getElementById('certificatesLabel').textContent = t.certificatesLabel;
+      document.getElementById('digitalGuidebookLabel').textContent = t.digitalGuidebookLabel;
+      document.getElementById('analogGuidebookLabel').textContent = t.analogGuidebookLabel;
+      document.getElementById('digitalSlidesLabel').textContent = t.digitalSlidesLabel;
+      document.getElementById('analogSlidesLabel').textContent = t.analogSlidesLabel;
+      document.getElementById('licensingPackLabel').textContent = t.licensingPackLabel;
+      document.getElementById('trainersLabel').textContent = t.trainersLabel;
+      document.getElementById('trainersInfoTitle').textContent = t.trainersInfoTitle;
+      document.getElementById('trainersBaseLabel').textContent = t.trainersBaseLabel;
+      document.getElementById('trainersTotalLabel').textContent = t.trainersTotalLabel;
+      document.getElementById('groupsCountLabel').textContent = t.groupsCountLabel;
+      document.getElementById('totalGamesLabel').textContent = t.totalGamesLabel;
+      document.getElementById('grandTotalHoursLabel').textContent = t.grandTotalHoursLabel;
+      document.getElementById('totalSessionsLabel').textContent = t.totalSessionsLabel;
+      document.getElementById('teamMembersLabel').textContent = t.teamMembersLabel;
+      document.getElementById('gamesBreakdownTitle').textContent = t.gamesBreakdownTitle;
+      document.getElementById('digitalGamesLabel').textContent = t.digitalGamesLabel;
+      document.getElementById('analogGamesLabel').textContent = t.analogGamesLabel;
+      document.getElementById('digitalGamesText').textContent = t.digitalGamesText;
+      document.getElementById('analogGamesText').textContent = t.analogGamesText;
+      document.getElementById('hoursBreakdownTitle').textContent = t.hoursBreakdownTitle;
+      document.getElementById('onlineHoursLabel').textContent = t.onlineHoursLabel;
+      document.getElementById('onsiteHoursLabel').textContent = t.onsiteHoursLabel;
+      document.getElementById('mentoringHoursLabel').textContent = t.mentoringHoursLabel;
+      document.getElementById('onlineHoursText').textContent = t.hoursText;
+      document.getElementById('onsiteHoursText').textContent = t.hoursText;
+      document.getElementById('mentoringHoursText').textContent = t.hoursText;
+      document.getElementById('pieChartLabel').textContent = currentLang === 'ar' ? 'ساعة' : 'hours';
+      document.getElementById('disclaimerText').textContent = t.disclaimerText;
+      document.getElementById('paymentScheduleTitle').textContent = t.paymentScheduleTitle;
+      document.getElementById('exportBtnText').textContent = t.exportBtnText;
+      
+      // Update ARIA labels for buttons
+      document.getElementById('decreaseBtn').setAttribute('aria-label', lang === 'ar' ? 'إنقاص المشاركين' : 'Decrease participants');
+      document.getElementById('increaseBtn').setAttribute('aria-label', lang === 'ar' ? 'زيادة المشاركين' : 'Increase participants');
+      document.getElementById('decreaseDigitalKitBtn').setAttribute('aria-label', lang === 'ar' ? 'إنقاص كمية الأطقم الرقمية' : 'Decrease digital kits quantity');
+      document.getElementById('increaseDigitalKitBtn').setAttribute('aria-label', lang === 'ar' ? 'زيادة كمية الأطقم الرقمية' : 'Increase digital kits quantity');
+      document.getElementById('decreaseAnalogKitBtn').setAttribute('aria-label', lang === 'ar' ? 'إنقاص كمية الأطقم التناظرية' : 'Decrease analog kits quantity');
+      document.getElementById('increaseAnalogKitBtn').setAttribute('aria-label', lang === 'ar' ? 'زيادة كمية الأطقم التناظرية' : 'Increase analog kits quantity');
+      document.getElementById('decreaseTrainersBtn').setAttribute('aria-label', lang === 'ar' ? 'إنقاص عدد المدربين' : 'Decrease trainers quantity');
+      document.getElementById('increaseTrainersBtn').setAttribute('aria-label', lang === 'ar' ? 'زيادة عدد المدربين' : 'Increase trainers quantity');
+
+      const licensingList = document.getElementById('licensingPackList');
+      licensingList.innerHTML = t.licensingPackList.map(item => `<li>${item}</li>`).join('');
+    }
+
+    // Helper function to distribute count evenly across buckets
+    function distributeEvenly(count, buckets) {
+      const result = [];
+      const base = Math.floor(count / buckets);
+      const remainder = count % buckets;
+      
+      for (let i = 0; i < buckets; i++) {
+        result.push(base + (i < remainder ? 1 : 0));
+      }
+      
+      return result;
+    }
+
+    function calculate() {
+      const t = translations[currentLang];
+      const p = state.participants;
+
+      // Validation
+      const input = document.getElementById('participantsInput');
+      
+      if (p < 10 || p > 75 || isNaN(p)) {
+        return;
+      }
+
+      // Step 1: Calculate groups (10-15 per group, as even as possible)
+      let numGroups = Math.ceil(p / 15);
+      
+      // Check if any group would be < 10, if so reduce groups
+      if (p / numGroups < 10) {
+        numGroups = Math.ceil(p / 10);
+      }
+      
+      const groupSizes = distributeEvenly(p, numGroups);
+
+      // Display group distribution with clear labels
+      const groupChips = document.getElementById('groupChips');
+      const chipsHtml = groupSizes.map((size, index) => 
+        `<span class="chip">
+          <svg class="chip-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          ${t.groupLabel} ${index + 1}: ${size} ${t.participantsPerGroup}
+        </span>`
+      ).join('');
+      
+      groupChips.innerHTML = `
+        <div class="group-chips-title">${t.groupDistribution}</div>
+        <div class="chips-container">${chipsHtml}</div>
+      `;
+
+      // Step 2: Total games (capacity signal)
+      const totalGames = Math.ceil(p / 8);
+
+      // Step 3: Digital vs. Analog game split
+      let digitalGames = Math.round(totalGames * 0.62);
+      let analogGames = totalGames - digitalGames;
+      
+      // Guardrails: if totalGames >= 2, ensure at least 1 of each
+      if (totalGames >= 2) {
+        if (digitalGames === 0) digitalGames = 1;
+        if (analogGames === 0) analogGames = 1;
+        // Rebalance if needed
+        if (digitalGames + analogGames !== totalGames) {
+          digitalGames = totalGames - analogGames;
+        }
+      }
+
+      // Step 4: Assign group types (Digital or Analog, not both)
+      let digitalGroupCount = Math.max(1, Math.min(numGroups, Math.round(numGroups * (digitalGames / totalGames))));
+      let analogGroupCount = numGroups - digitalGroupCount;
+      
+      // Special case: if only 1 group, assign it to the type with more games
+      if (numGroups === 1) {
+        if (digitalGames >= analogGames) {
+          digitalGroupCount = 1;
+          analogGroupCount = 0;
+          // All games become digital
+          digitalGames = totalGames;
+          analogGames = 0;
+        } else {
+          digitalGroupCount = 0;
+          analogGroupCount = 1;
+          // All games become analog
+          analogGames = totalGames;
+          digitalGames = 0;
+        }
+      } else {
+        // If we have multiple games but no analog groups, ensure at least 1
+        if (totalGames >= 2 && analogGroupCount === 0) {
+          analogGroupCount = 1;
+          digitalGroupCount = numGroups - 1;
+        }
+      }
+
+      // Step 5: Distribute games into groups (same-type only)
+      const digitalGamesPerGroup = digitalGroupCount > 0 ? distributeEvenly(digitalGames, digitalGroupCount) : [];
+      const analogGamesPerGroup = analogGroupCount > 0 ? distributeEvenly(analogGames, analogGroupCount) : [];
+      
+      // Build group assignments
+      const groups = [];
+      for (let i = 0; i < digitalGroupCount; i++) {
+        groups.push({ type: 'digital', games: digitalGamesPerGroup[i] });
+      }
+      for (let i = 0; i < analogGroupCount; i++) {
+        groups.push({ type: 'analog', games: analogGamesPerGroup[i] });
+      }
+
+      // Step 6: Mentoring sessions (per-group, then total)
+      // Digital groups: 1 session/week for 8 weeks = 8 sessions per group
+      // Analog groups: 1 session/week for 4 weeks = 4 sessions per group
+      // Each session is 2 hours
+      let sessionsTotal = 0;
+      let mentoringHoursTotal = 0;
+      
+      groups.forEach(group => {
+        const sessions = group.type === 'digital' ? 8 : 4;
+        const hours = sessions * 2;
+        sessionsTotal += sessions;
+        mentoringHoursTotal += hours;
+      });
+
+      // Step 7: Team members calculation
+      // Number of mentors = number of groups + 1 coordinator
+      const teamMembers = numGroups + 1;
+
+      // Step 8: Hours & Costs (no double counting)
+      const trainingHoursBaseTotal = numGroups * 108; // 20 online + 88 on-site per group
+      const totalOnlineHours = numGroups * 20;
+      const totalOnsiteHours = numGroups * 88;
+      const grandTotalHours = trainingHoursBaseTotal + mentoringHoursTotal;
+
+      // Calculate costs - training cost includes base training hours + mentoring hours
+      const trainingCost = grandTotalHours * 30;
+      
+      let digitalBookletsCost = 0;
+      let printedKitsCost = 0;
+      let digitalPrintedKitCost = 0;
+      let analogPrintedKitCost = 0;
+      let certificatesCost = 0;
+      let digitalGuidebookCost = 0;
+      let analogGuidebookCost = 0;
+      let digitalSlidesCost = 0;
+      let analogSlidesCost = 0;
+      
+      if (state.digitalBooklets) {
+        if (state.digitalGuidebook) {
+          digitalGuidebookCost = 500;
+          digitalBookletsCost += digitalGuidebookCost;
+        }
+        if (state.analogGuidebook) {
+          analogGuidebookCost = 500;
+          digitalBookletsCost += analogGuidebookCost;
+        }
+        if (state.digitalSlides) {
+          digitalSlidesCost = 300;
+          digitalBookletsCost += digitalSlidesCost;
+        }
+        if (state.analogSlides) {
+          analogSlidesCost = 300;
+          digitalBookletsCost += analogSlidesCost;
+        }
+      }
+
+      if (state.printedKits) {
+        if (state.digitalPrintedKit) {
+          digitalPrintedKitCost = state.digitalKitQuantity * 250;
+          printedKitsCost += digitalPrintedKitCost;
+        }
+        if (state.analogPrintedKit) {
+          analogPrintedKitCost = state.analogKitQuantity * 250;
+          printedKitsCost += analogPrintedKitCost;
+        }
+      }
+
+      if (state.certificates) {
+        certificatesCost = p * 80;
+      }
+
+      let licensingPackCost = 0;
+      let extraTrainersCost = 0;
+      let includedTrainers = 0;
+      let additionalTrainers = 0;
+      
+      if (state.licensingPack) {
+        licensingPackCost = 4200; // Base price for up to 10 trainers
+        
+        if (state.trainers > 10) {
+          additionalTrainers = state.trainers - 10;
+          extraTrainersCost = additionalTrainers * 200;
+          licensingPackCost += extraTrainersCost;
+          includedTrainers = 10;
+        } else {
+          includedTrainers = state.trainers;
+        }
+      }
+
+      const grandTotal = trainingCost + digitalBookletsCost + printedKitsCost + certificatesCost + licensingPackCost;
+
+      // Update outputs
+      document.getElementById('groupsCount').textContent = numGroups;
+      document.getElementById('totalGames').textContent = totalGames;
+      document.getElementById('totalSessions').textContent = sessionsTotal;
+      
+      // REVERTED LINE:
+      document.getElementById('grandTotalHours').textContent = grandTotalHours; 
+      
+      document.getElementById('teamMembers').textContent = teamMembers;
+      
+      // Update games breakdown
+      document.getElementById('digitalGamesCount').textContent = digitalGames;
+      document.getElementById('analogGamesCount').textContent = analogGames;
+      
+      // Update hours breakdown with pie chart
+      document.getElementById('totalOnline').textContent = totalOnlineHours;
+      document.getElementById('totalOnsite').textContent = totalOnsiteHours;
+      document.getElementById('mentoringTotal').textContent = mentoringHoursTotal;
+      document.getElementById('pieChartTotal').textContent = grandTotalHours;
+      document.getElementById('pieChartLabel').textContent = currentLang === 'ar' ? 'ساعة' : 'hours';
+      
+      // Calculate percentages
+      const onlinePercent = (grandTotalHours > 0) ? (totalOnlineHours / grandTotalHours) * 100 : 0;
+      const onsitePercent = (grandTotalHours > 0) ? (totalOnsiteHours / grandTotalHours) * 100 : 0;
+      const mentoringPercent = (grandTotalHours > 0) ? (mentoringHoursTotal / grandTotalHours) * 100 : 0;
+      
+      // Update percentage labels
+      document.getElementById('onlinePercent').textContent = '(' + Math.round(onlinePercent) + '%)';
+      document.getElementById('onsitePercent').textContent = '(' + Math.round(onsitePercent) + '%)';
+      document.getElementById('mentoringPercent').textContent = '(' + Math.round(mentoringPercent) + '%)';
+      
+      // Update progress bars
+      document.getElementById('onlineProgressBar').style.width = Math.round(onlinePercent) + '%';
+      document.getElementById('onsiteProgressBar').style.width = Math.round(onsitePercent) + '%';
+      document.getElementById('mentoringProgressBar').style.width = Math.round(mentoringPercent) + '%';
+      
+      // Draw donut chart using canvas
+      const canvas = document.getElementById('pieChart');
+      const ctx = canvas.getContext('2d');
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, 220, 220);
+      
+      const slices = [
+        { hours: totalOnlineHours, color: 'var(--accent-color-blue)', label: 'online' },
+        { hours: totalOnsiteHours, color: 'var(--accent-color)', label: 'onsite' },
+        { hours: mentoringHoursTotal, color: 'var(--accent-color-orange)', label: 'mentoring' }
+      ];
+      
+      const centerX = 110;
+      const centerY = 110;
+      const outerRadius = 95;
+      const innerRadius = 60; // Creates the donut hole
+      
+      // Start from top (-90 degrees = -Math.PI/2)
+      let currentAngle = -Math.PI / 2;
+      
+      slices.forEach(slice => {
+        if (slice.hours === 0) return; // Skip zero slices
+        
+        const slicePercent = (grandTotalHours > 0) ? (slice.hours / grandTotalHours) : 0;
+        const sliceAngle = slicePercent * 2 * Math.PI; // Convert to radians
+        
+        // Draw donut slice (arc with thickness)
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, outerRadius, currentAngle, currentAngle + sliceAngle);
+        ctx.arc(centerX, centerY, innerRadius, currentAngle + sliceAngle, currentAngle, true);
+        ctx.closePath();
+        
+        // Get color from CSS variable
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(slice.color.match(/--(.*)\)/)[0].slice(0, -1));
+        ctx.fill();
+        
+        // Draw white border
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        currentAngle += sliceAngle;
+      });
+
+      // Update prices
+      document.getElementById('digitalBookletsPrice').textContent = 
+        state.digitalBooklets ? `$${digitalBookletsCost.toLocaleString()}` : '$0';
+      
+      document.getElementById('printedKitsPrice').textContent = 
+        state.printedKits ? `$${printedKitsCost.toLocaleString()}` : '$0';
+      
+      document.getElementById('certificatesPrice').textContent = 
+        state.certificates ? `$${certificatesCost.toLocaleString()}` : '$0';
+      
+      document.getElementById('licensingPackPrice').textContent = 
+        state.licensingPack ? `$${licensingPackCost.toLocaleString()}` : '$0';
+
+      // Update cost summary
+      const costRows = document.getElementById('costRows');
+      let rows = [];
+
+      const hoursLabel = currentLang === 'ar' ? `${grandTotalHours} ${t.hoursText}` : `${grandTotalHours} ${t.hoursShort}`;
+      rows.push(`
+        <div class="cost-row">
+          <span class="cost-label">${t.trainingCostItem} (${hoursLabel} × $30)</span>
+          <span class="cost-amount">$${trainingCost.toLocaleString()}</span>
+        </div>
+      `);
+
+      // Add Service Add-ons section header if any add-ons are selected
+      const hasAddons = state.certificates || state.digitalBooklets || state.printedKits || state.licensingPack;
+      if (hasAddons) {
+        rows.push(`
+          <div class="cost-row addon-header">
+            <span class="cost-label">${t.addonsTitle}</span>
+            <span class="cost-amount"></span>
+          </div>
+        `);
+      }
+
+      if (state.certificates) {
+        rows.push(`
+          <div class="cost-row">
+            <span class="cost-label indent">${t.certificatesItem} (${p} × $80)</span>
+            <span class="cost-amount">$${certificatesCost.toLocaleString()}</span>
+          </div>
+        `);
+      }
+
+      if (state.digitalBooklets) {
+        rows.push(`
+          <div class="cost-row">
+            <span class="cost-label indent">${t.bookletsItem}</span>
+            <span class="cost-amount">$${digitalBookletsCost.toLocaleString()}</span>
+          </div>
+        `);
+        
+        if (state.digitalGuidebook) {
+          rows.push(`
+            <div class="cost-row">
+              <span class="cost-label sub-item">${t.digitalGuidebookItem}</span>
+              <span class="cost-amount sub-item">$500</span>
+            </div>
+          `);
+        }
+        
+        if (state.analogGuidebook) {
+          rows.push(`
+            <div class="cost-row">
+              <span class="cost-label sub-item">${t.analogGuidebookItem}</span>
+              <span class="cost-amount sub-item">$500</span>
+            </div>
+          `);
+        }
+        
+        if (state.digitalSlides) {
+          rows.push(`
+            <div class="cost-row">
+              <span class="cost-label sub-item">${t.digitalSlidesItem}</span>
+              <span class="cost-amount sub-item">$300</span>
+            </div>
+          `);
+        }
+        
+        if (state.analogSlides) {
+          rows.push(`
+            <div class="cost-row">
+              <span class="cost-label sub-item">${t.analogSlidesItem}</span>
+              <span class="cost-amount sub-item">$300</span>
+            </div>
+          `);
+        }
+      }
+
+      if (state.printedKits) {
+        rows.push(`
+          <div class="cost-row">
+            <span class="cost-label indent">${t.printedKitsItem}</span>
+            <span class="cost-amount">$${printedKitsCost.toLocaleString()}</span>
+          </div>
+        `);
+        
+        if (state.digitalPrintedKit) {
+          const digitalKitLabel = currentLang === 'ar' 
+            ? `${t.digitalPrintedKitItem} (${state.digitalKitQuantity} × $250)`
+            : `${t.digitalPrintedKitItem} (${state.digitalKitQuantity} × $250)`;
+          rows.push(`
+            <div class="cost-row">
+              <span class="cost-label sub-item">${digitalKitLabel}</span>
+              <span class="cost-amount sub-item">$${digitalPrintedKitCost.toLocaleString()}</span>
+            </div>
+          `);
+        }
+        
+        if (state.analogPrintedKit) {
+          const analogKitLabel = currentLang === 'ar' 
+            ? `${t.analogPrintedKitItem} (${state.analogKitQuantity} × $250)`
+            : `${t.analogPrintedKitItem} (${state.analogKitQuantity} × $250)`;
+          rows.push(`
+            <div class="cost-row">
+              <span class="cost-label sub-item">${analogKitLabel}</span>
+              <span class="cost-amount sub-item">$${analogPrintedKitCost.toLocaleString()}</span>
+            </div>
+          `);
+        }
+      }
+
+      if (state.licensingPack) {
+        rows.push(`
+          <div class="cost-row">
+            <span class="cost-label indent">${t.licensingPackItem}</span>
+            <span class="cost-amount">$${licensingPackCost.toLocaleString()}</span>
+          </div>
+        `);
+        
+        rows.push(`
+          <div class="cost-row">
+            <span class="cost-label sub-item">${t.licenseBaseItem}</span>
+            <span class="cost-amount sub-item">$4,200</span>
+          </div>
+        `);
+        
+        if (additionalTrainers > 0) {
+          rows.push(`
+            <div class="cost-row">
+              <span class="cost-label sub-item">${t.extraTrainersItem} (${additionalTrainers} × $200)</span>
+              <span class="cost-amount sub-item">$${extraTrainersCost.toLocaleString()}</span>
+            </div>
+          `);
+        }
+      }
+
+      rows.push(`
+        <div class="cost-row total">
+          <span class="cost-label">${t.totalItem}</span>
+          <span class="cost-amount">$${grandTotal.toLocaleString()}</span>
+        </div>
+      `);
+
+      costRows.innerHTML = rows.join('');
+
+      // Update payment schedule
+      const paymentItems = document.getElementById('paymentScheduleItems');
+      let payments = [];
+
+      payments.push(`
+        <div class="payment-row">
+          <span class="payment-row-label">${t.paymentOnline}</span>
+          <span class="payment-row-amount">$${(totalOnlineHours * 30).toLocaleString()}</span>
+        </div>
+      `);
+
+      payments.push(`
+        <div class="payment-row">
+          <span class="payment-row-label">${t.paymentOnsite}</span>
+          <span class="payment-row-amount">$${(totalOnsiteHours * 30).toLocaleString()}</span>
+        </div>
+      `);
+
+      // Only show mentoring payment if mentoring hours exist (they're always included in base training)
+      payments.push(`
+        <div class="payment-row">
+          <span class="payment-row-label">${t.paymentMentoring}</span>
+          <span class="payment-row-amount">$${(mentoringHoursTotal * 30).toLocaleString()}</span>
+        </div>
+      `);
+
+      // Only show licensing pack payment if it's selected
+      if (state.licensingPack && licensingPackCost > 0) {
+        payments.push(`
+          <div class="payment-row">
+            <span class="payment-row-label">${t.paymentToT}</span>
+            <span class="payment-row-amount">$${licensingPackCost.toLocaleString()}</span>
+          </div>
+        `);
+      }
+
+      const upfrontAmount = digitalBookletsCost + printedKitsCost + certificatesCost;
+      if (upfrontAmount > 0) {
+        payments.push(`
+          <div class="payment-row">
+            <span class="payment-row-label">${t.paymentUpfront}</span>
+            <span class="payment-row-amount">$${upfrontAmount.toLocaleString()}</span>
+          </div>
+        `);
+      }
+
+      paymentItems.innerHTML = payments.join('');
+    }
+
+    function exportPDF() {
+      window.print();
+    }
+
+    // Element SDK Integration
+    async function onConfigChange(config) {
+      const titleAr = config.program_title_ar || defaultConfig.program_title_ar;
+      const titleEn = config.program_title_en || defaultConfig.program_title_en;
+      const clientAr = config.client_placeholder_ar || defaultConfig.client_placeholder_ar;
+      const clientEn = config.client_placeholder_en || defaultConfig.client_placeholder_en;
+
+      document.getElementById('programTitle').textContent = currentLang === 'ar' ? titleAr : titleEn;
+      document.getElementById('clientPlaceholder').textContent = currentLang === 'ar' ? clientAr : clientEn;
+
+      // *** REFACTORED: Apply colors using CSS variables ***
+      const primaryColor = config.primary_color || defaultConfig.primary_color;
+      const accentColor = config.accent_color || defaultConfig.accent_color;
+
+      // Set the CSS variables on the root element
+      document.documentElement.style.setProperty('--primary-color', primaryColor);
+      document.documentElement.style.setProperty('--accent-color', accentColor);
+      
+      // We might need to manually re-draw the canvas if colors change
+      calculate(); 
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig: defaultConfig,
+        onConfigChange: onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => {
+                config.primary_color = value;
+                window.elementSdk.setConfig({ primary_color: value });
+              }
+            },
+            {
+              get: () => config.accent_color || defaultConfig.accent_color,
+              set: (value) => {
+                config.accent_color = value;
+                window.elementSdk.setConfig({ accent_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['program_title_ar', config.program_title_ar || defaultConfig.program_title_ar],
+          ['program_title_en', config.program_title_en || defaultConfig.program_title_en],
+          ['client_placeholder_ar', config.client_placeholder_ar || defaultConfig.client_placeholder_ar],
+          ['client_placeholder_en', config.client_placeholder_en || defaultConfig.client_placeholder_en]
+        ])
+      });
+    }
+
+    // Start the app
+    init();
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99d8a2be356de1f1',t:'MTc2Mjk3NzgzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>
