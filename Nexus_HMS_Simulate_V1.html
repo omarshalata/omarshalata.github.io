@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hotels Mapping ROI Simulator (1-Page)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --primary:#2563eb; --primaryHover:#1d4ed8;
+      --bg:#f8fafc; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+      --border:#e2e8f0; --success:#10b981; --danger:#ef4444; --warn:#f59e0b;
+      --shadow:0 1px 3px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column;
+    }
+    header, footer{
+      background:var(--card); border-bottom:1px solid var(--border);
+      padding:14px 18px; flex-shrink:0;
+    }
+    footer{
+      border-top:1px solid var(--border); border-bottom:none; font-size:12px; color:var(--muted);
+      text-align:center;
+    }
+    .hdr{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+    h1{margin:0; font-size:16px; font-weight:800; letter-spacing:.2px}
+    .sub{margin-top:3px; font-size:13px; color:var(--muted)}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .btn, select.btn{
+      border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:8px;
+      cursor:pointer; font-size:13px; font-weight:600; color:var(--text);
+      transition:all .15s ease;
+    }
+    .btn:hover, select.btn:hover{border-color:#94a3b8; background:#f8fafc}
+    .btnPrimary{background:var(--primary); border-color:var(--primary); color:#fff}
+    .btnPrimary:hover{background:var(--primaryHover); border-color:var(--primaryHover)}
+    .btnGhost{background:#f1f5f9}
+    .main{display:flex; flex:1; overflow:hidden}
+    .inputs{
+      width:420px; background:var(--card); border-right:1px solid var(--border);
+      overflow:auto; padding:16px; display:flex; flex-direction:column; gap:14px;
+    }
+    .results{flex:1; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:14px}
+    .sectionTitle{
+      font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+      color:var(--muted); font-weight:800; border-bottom:2px solid var(--border);
+      padding-bottom:6px; margin-top:8px;
+    }
+    .group{padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff; box-shadow:var(--shadow)}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .field{flex:1; min-width:165px}
+    label{
+      display:flex; justify-content:space-between; gap:10px;
+      font-size:12.5px; font-weight:700; color:#0b1220; margin-bottom:6px;
+      align-items:flex-start;
+    }
+    .hint{
+      color:var(--muted); font-weight:700; font-size:11px; cursor:help;
+      border-bottom:1px dotted #94a3b8; line-height:1.2;
+      max-width:180px; text-align:right;
+    }
+    input[type="number"], select{
+      width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:10px;
+      font-size:13px; outline:none;
+    }
+    input[type="number"]:focus, select:focus{border-color:#93c5fd; box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+    input[type="range"]{width:100%}
+    .rangeLine{display:flex; gap:10px; align-items:center}
+    .pill{
+      font-size:12px; font-weight:900; color:var(--primary);
+      background:#eff6ff; border:1px solid #bfdbfe; padding:4px 8px; border-radius:999px;
+      white-space:nowrap;
+    }
+    details{
+      border:1px solid var(--border); border-radius:12px; background:#fff; box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    summary{
+      list-style:none; cursor:pointer; padding:12px; font-weight:900; color:var(--primary);
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    summary::-webkit-details-marker{display:none}
+    .detailsBody{padding:12px; border-top:1px solid var(--border)}
+    .smallMuted{font-size:12px; color:var(--muted)}
+    .matrix{display:grid; grid-template-columns:180px repeat(5, minmax(92px, 1fr)); gap:8px; margin-top:10px}
+    .matrix .head{
+      font-size:11px; color:var(--muted); font-weight:900; text-transform:uppercase; letter-spacing:.06em;
+      padding:6px 8px;
+    }
+    .matrix .cellLabel{font-size:12px; font-weight:900; padding:6px 8px; color:#0b1220}
+    .matrix input{padding:8px; border-radius:10px; border:1px solid var(--border); font-size:12px}
+
+    .kpis{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px}
+    .kpi{background:#fff; border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow)}
+    .kpi h3{margin:0; font-size:12px; color:var(--muted); font-weight:900; text-transform:uppercase; letter-spacing:.06em}
+    .kpi .val{margin:8px 0 4px; font-size:22px; font-weight:1000}
+    .kpi .delta{font-size:13px; font-weight:900}
+    .pos{color:var(--success)} .neg{color:var(--danger)} .neu{color:var(--muted)}
+    .banner{
+      background:#ecfdf5; border:1px solid #a7f3d0; border-radius:14px; padding:10px 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      box-shadow:var(--shadow);
+    }
+    .banner strong{color:#064e3b}
+    .charts{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .chartBox{
+      background:#fff; border:1px solid var(--border); border-radius:14px; padding:12px;
+      height:340px; box-shadow:var(--shadow);
+    }
+    .chartBox.full{grid-column:span 2; height:320px}
+    .insight{background:#fff; border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow)}
+    .insightTitle{font-weight:1000; margin:0 0 6px; font-size:13px}
+    .insightText{margin:0; color:var(--muted); font-size:13px; line-height:1.55}
+    code{background:#f1f5f9; padding:2px 6px; border-radius:8px}
+    .dangerTag{
+      display:inline-block; font-size:11px; font-weight:1000; color:#7f1d1d;
+      background:#fee2e2; border:1px solid #fecaca; padding:4px 8px; border-radius:999px;
+    }
+    @media (max-width: 1024px){
+      .main{flex-direction:column}
+      .inputs{width:100%; border-right:none; border-bottom:1px solid var(--border)}
+      .charts{grid-template-columns:1fr}
+      .chartBox.full{grid-column:span 1}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="hdr">
+    <div>
+      <h1>Hotels Mapping ROI Simulator</h1>
+      <div class="sub">Quantify how mapping quality lifts conversion and reduces cancellations/support leakage for OTAs.</div>
+    </div>
+    <div class="toolbar">
+      <select id="presetSelect" class="btn" title="Load a preset (does not overwrite your saved A/B)">
+        <option value="custom">Custom</option>
+        <option value="conservative">Preset: Conservative</option>
+        <option value="aggressive">Preset: Aggressive</option>
+      </select>
+      <button class="btn btnGhost" onclick="saveScenario('A')">Save A</button>
+      <button class="btn btnGhost" onclick="loadScenario('A')">Load A</button>
+      <button class="btn btnGhost" onclick="saveScenario('B')">Save B</button>
+      <button class="btn btnGhost" onclick="loadScenario('B')">Load B</button>
+      <button class="btn" onclick="resetDefaults()">Reset</button>
+      <button class="btn btnPrimary" onclick="exportCSV()">Export CSV</button>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+  <aside class="inputs">
+    <div class="group">
+      <div class="sectionTitle">Global</div>
+      <div class="row">
+        <div class="field">
+          <label>Currency <span class="hint" title="Formatting only.">Formatting only</span></label>
+          <select id="currency" onchange="recalc()">
+            <option value="SAR">SAR (﷼)</option>
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Module cost / month <span class="hint" title="Used for ROI and break-even.">ROI input</span></label>
+          <input type="number" id="tool_cost" value="2500" min="0" step="50" oninput="recalc()"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="sectionTitle">1) Traffic & Baseline Funnel</div>
+      <div class="row">
+        <div class="field"><label>Monthly sessions <span class="hint" title="Top-of-funnel sessions.">Top funnel</span></label>
+          <input type="number" id="sessions" value="500000" min="0" step="1000" oninput="recalc()"/></div>
+        <div class="field"><label>Search → List (%) <span class="hint" title="Reach results.">Reach list</span></label>
+          <input type="number" id="ctr_list" value="60" min="0" max="100" step="0.1" oninput="recalc()"/></div>
+        <div class="field"><label>List → PDP (%) <span class="hint" title="Click into property details.">Browse→detail</span></label>
+          <input type="number" id="ctr_pdp" value="25" min="0" max="100" step="0.1" oninput="recalc()"/></div>
+        <div class="field"><label>PDP → Room (%) <span class="hint" title="Select a room/offer.">Detail→choose</span></label>
+          <input type="number" id="ctr_room" value="15" min="0" max="100" step="0.1" oninput="recalc()"/></div>
+        <div class="field"><label>Room → Booking (%) <span class="hint" title="Complete booking after room selection.">Checkout</span></label>
+          <input type="number" id="cvr_book" value="12" min="0" max="100" step="0.1" oninput="recalc()"/></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="sectionTitle">2) Unit Economics</div>
+      <div class="row">
+        <div class="field"><label>AOV <span class="hint" title="GMV per booking.">GMV/booking</span></label>
+          <input type="number" id="aov" value="350" min="0" step="10" oninput="recalc()"/></div>
+        <div class="field"><label>Take rate (%) <span class="hint" title="Margin as % of GMV.">Margin</span></label>
+          <input type="number" id="take_rate" value="12" min="0" max="100" step="0.1" oninput="recalc()"/></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="sectionTitle">3) Operational Leakage</div>
+      <div class="row">
+        <div class="field"><label>Cancellation rate (%) <span class="hint" title="All cancellations.">All cancels</span></label>
+          <input type="number" id="cx_rate" value="18" min="0" max="100" step="0.1" oninput="recalc()"/></div>
+        <div class="field"><label>% cancels due to bad data <span class="hint" title="Duplicates/geo/room/amenity/content issues.">Attribution</span></label>
+          <input type="number" id="cx_data_cause" value="20" min="0" max="100" step="1" oninput="recalc()"/></div>
+        <div class="field"><label>Tickets per 1k bookings <span class="hint" title="Support tickets per 1,000 bookings.">Support load</span></label>
+          <input type="number" id="support_ratio" value="40" min="0" step="1" oninput="recalc()"/></div>
+        <div class="field"><label>% tickets due to bad data <span class="hint" title="Bad-data related tickets.">Attribution</span></label>
+          <input type="number" id="support_data_cause" value="30" min="0" max="100" step="1" oninput="recalc()"/></div>
+        <div class="field"><label>Cost per ticket <span class="hint" title="Fully-loaded support cost/case.">Cost</span></label>
+          <input type="number" id="cost_per_ticket" value="8" min="0" step="0.5" oninput="recalc()"/></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="sectionTitle">4) Mapping Improvements</div>
+
+      <div class="field">
+        <label>Duplicate reduction (%) <span class="hint" title="Property de-dupe across suppliers.">Dedupe</span></label>
+        <div class="rangeLine">
+          <input type="range" id="imp_dup" min="0" max="100" value="80" oninput="syncPill('imp_dup','pill_dup'); recalc()"/>
+          <span class="pill" id="pill_dup">80%</span>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label>Geo-accuracy improvement (%) <span class="hint" title="Correct map pins and geo validation.">Geo</span></label>
+        <div class="rangeLine">
+          <input type="range" id="imp_geo" min="0" max="100" value="40" oninput="syncPill('imp_geo','pill_geo'); recalc()"/>
+          <span class="pill" id="pill_geo">40%</span>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label>Room normalization improvement (%) <span class="hint" title="Normalize room types/names across suppliers.">Rooms</span></label>
+        <div class="rangeLine">
+          <input type="range" id="imp_room" min="0" max="100" value="35" oninput="syncPill('imp_room','pill_room'); recalc()"/>
+          <span class="pill" id="pill_room">35%</span>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label>Image ranking improvement (%) <span class="hint" title="Best images first = higher trust.">Images</span></label>
+        <div class="rangeLine">
+          <input type="range" id="imp_img" min="0" max="100" value="50" oninput="syncPill('imp_img','pill_img'); recalc()"/>
+          <span class="pill" id="pill_img">50%</span>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label>Amenity normalization improvement (%) <span class="hint" title="Consistent amenity taxonomy and filters.">Amenities</span></label>
+        <div class="rangeLine">
+          <input type="range" id="imp_amen" min="0" max="100" value="45" oninput="syncPill('imp_amen','pill_amen'); recalc()"/>
+          <span class="pill" id="pill_amen">45%</span>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label>Content enrichment improvement (%) <span class="hint" title="Better descriptions/policies/media completeness.">Content</span></label>
+        <div class="rangeLine">
+          <input type="range" id="imp_cont" min="0" max="100" value="50" oninput="syncPill('imp_cont','pill_cont'); recalc()"/>
+          <span class="pill" id="pill_cont">50%</span>
+        </div>
+      </div>
+    </div>
+
+    <details open>
+      <summary>Advanced model settings</summary>
+      <div class="detailsBody">
+        <div class="smallMuted">
+          Each weight transfers improvement into step lift. Example: 60% dupe × weight 0.10 → +6% step lift.
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="sectionTitle" style="margin:0 0 8px">Funnel lift weights</div>
+          <div class="matrix">
+            <div class="head"></div>
+            <div class="head">Dupe</div><div class="head">Geo</div><div class="head">Room</div><div class="head">Image</div><div class="head">Amenity</div>
+
+            <div class="cellLabel">Search→List</div>
+            <input id="w_sl_dup" type="number" value="0.03" step="0.01" oninput="recalc()"/>
+            <input id="w_sl_geo" type="number" value="0.06" step="0.01" oninput="recalc()"/>
+            <input id="w_sl_room" type="number" value="0.00" step="0.01" oninput="recalc()"/>
+            <input id="w_sl_img" type="number" value="0.02" step="0.01" oninput="recalc()"/>
+            <input id="w_sl_amen" type="number" value="0.03" step="0.01" oninput="recalc()"/>
+
+            <div class="cellLabel">List→PDP</div>
+            <input id="w_lp_dup" type="number" value="0.08" step="0.01" oninput="recalc()"/>
+            <input id="w_lp_geo" type="number" value="0.10" step="0.01" oninput="recalc()"/>
+            <input id="w_lp_room" type="number" value="0.02" step="0.01" oninput="recalc()"/>
+            <input id="w_lp_img" type="number" value="0.06" step="0.01" oninput="recalc()"/>
+            <input id="w_lp_amen" type="number" value="0.05" step="0.01" oninput="recalc()"/>
+
+            <div class="cellLabel">PDP→Room</div>
+            <input id="w_pr_dup" type="number" value="0.01" step="0.01" oninput="recalc()"/>
+            <input id="w_pr_geo" type="number" value="0.02" step="0.01" oninput="recalc()"/>
+            <input id="w_pr_room" type="number" value="0.12" step="0.01" oninput="recalc()"/>
+            <input id="w_pr_img" type="number" value="0.10" step="0.01" oninput="recalc()"/>
+            <input id="w_pr_amen" type="number" value="0.08" step="0.01" oninput="recalc()"/>
+
+            <div class="cellLabel">Room→Book</div>
+            <input id="w_rb_dup" type="number" value="0.00" step="0.01" oninput="recalc()"/>
+            <input id="w_rb_geo" type="number" value="0.01" step="0.01" oninput="recalc()"/>
+            <input id="w_rb_room" type="number" value="0.10" step="0.01" oninput="recalc()"/>
+            <input id="w_rb_img" type="number" value="0.06" step="0.01" oninput="recalc()"/>
+            <input id="w_rb_amen" type="number" value="0.08" step="0.01" oninput="recalc()"/>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="sectionTitle" style="margin:0 0 8px">Leakage efficacy</div>
+          <div class="row">
+            <div class="field">
+              <label>Cancel efficacy (0–1) <span class="hint" title="How effectively mapping reduces bad-data cancellations.">Effectiveness</span></label>
+              <input id="eff_cancel" type="number" value="0.85" min="0" max="1" step="0.01" oninput="recalc()"/>
+            </div>
+            <div class="field">
+              <label>Ticket efficacy (0–1) <span class="hint" title="How effectively mapping reduces bad-data tickets.">Effectiveness</span></label>
+              <input id="eff_ticket" type="number" value="0.90" min="0" max="1" step="0.01" oninput="recalc()"/>
+            </div>
+          </div>
+
+          <div class="smallMuted" style="margin-top:10px">
+            Note: leakage reduction is applied only to the <em>bad-data-caused</em> share.
+          </div>
+        </div>
+      </div>
+    </details>
+  </aside>
+
+  <main class="results">
+    <section class="kpis">
+      <div class="kpi"><h3>Bookings (With Mapping)</h3><div class="val" id="k_book">—</div><div class="delta" id="d_book">—</div></div>
+      <div class="kpi"><h3>Revenue (Margin)</h3><div class="val" id="k_rev">—</div><div class="delta" id="d_rev">—</div></div>
+      <div class="kpi"><h3>Cancel loss saved</h3><div class="val pos" id="k_cxsave">—</div><div class="delta neu">Bad-data cancellations reduced</div></div>
+      <div class="kpi"><h3>Support cost saved</h3><div class="val pos" id="k_supsave">—</div><div class="delta neu">Bad-data tickets reduced</div></div>
+      <div class="kpi"><h3>Net monthly impact</h3><div class="val" id="k_net">—</div><div class="delta" id="k_roi">ROI: —</div></div>
+      <div class="kpi"><h3>Risk checks</h3><div class="val" style="font-size:14px; font-weight:900" id="k_risk">—</div><div class="delta neu" style="font-size:12px" id="k_risk2">—</div></div>
+    </section>
+
+    <section class="banner">
+      <div><strong>💰 Break-even</strong> <span class="smallMuted">vs module cost</span></div>
+      <div id="breakEvenText" style="font-weight:1000; color:#065f46">—</div>
+    </section>
+
+    <section class="charts">
+      <div class="chartBox"><canvas id="chartPerf"></canvas></div>
+      <div class="chartBox"><canvas id="chartLeak"></canvas></div>
+      <div class="chartBox full"><canvas id="chartSens"></canvas></div>
+    </section>
+
+    <section class="insight">
+      <p class="insightTitle">Board-ready insight</p>
+      <p class="insightText" id="insightText">—</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <strong>Assumptions & Disclaimer:</strong>
+  Simulation only. “Bad data” attribution is estimated. Model assumes linear transfer within specified ranges and does not account for seasonality or supply mix.
+</footer>
+
+<script>
+  const DEFAULTS = {
+    currency: "SAR",
+    tool_cost: 2500,
+    sessions: 500000,
+    ctr_list: 60, ctr_pdp: 25, ctr_room: 15, cvr_book: 12,
+    aov: 350, take_rate: 12,
+    cx_rate: 18, cx_data_cause: 20,
+    support_ratio: 40, support_data_cause: 30, cost_per_ticket: 8,
+    imp_dup: 80, imp_geo: 40, imp_room: 35, imp_img: 50, imp_amen: 45, imp_cont: 50,
+    w_sl_dup: 0.03, w_sl_geo: 0.06, w_sl_room: 0.00, w_sl_img: 0.02, w_sl_amen: 0.03,
+    w_lp_dup: 0.08, w_lp_geo: 0.10, w_lp_room: 0.02, w_lp_img: 0.06, w_lp_amen: 0.05,
+    w_pr_dup: 0.01, w_pr_geo: 0.02, w_pr_room: 0.12, w_pr_img: 0.10, w_pr_amen: 0.08,
+    w_rb_dup: 0.00, w_rb_geo: 0.01, w_rb_room: 0.10, w_rb_img: 0.06, w_rb_amen: 0.08,
+    eff_cancel: 0.85, eff_ticket: 0.90
+  };
+
+  const PRESETS = {
+    conservative: { imp_dup: 50, imp_geo: 25, imp_room: 20, imp_img: 25, imp_amen: 25, imp_cont: 25, eff_cancel: 0.65, eff_ticket: 0.70, tool_cost: 3500 },
+    aggressive:   { imp_dup: 90, imp_geo: 75, imp_room: 60, imp_img: 70, imp_amen: 65, imp_cont: 75, eff_cancel: 0.90, eff_ticket: 0.92, tool_cost: 4500 }
+  };
+
+  const $ = (id)=>document.getElementById(id);
+  const clamp = (x,min,max)=>Math.max(min,Math.min(max,x));
+  const num = (id)=>parseFloat($(id).value)||0;
+  const pct01 = (id)=>clamp(num(id),0,100)/100;
+
+  function syncPill(rangeId, pillId){ $(pillId).textContent = `${clamp(num(rangeId),0,100).toFixed(0)}%`; }
+  function syncAllPills(){
+    syncPill('imp_dup','pill_dup'); syncPill('imp_geo','pill_geo'); syncPill('imp_room','pill_room');
+    syncPill('imp_img','pill_img'); syncPill('imp_amen','pill_amen'); syncPill('imp_cont','pill_cont');
+  }
+
+  function formatters(){
+    const curr = $('currency').value;
+    return {
+      money: new Intl.NumberFormat('en-US',{style:'currency',currency:curr,maximumFractionDigits:0}),
+      numF:  new Intl.NumberFormat('en-US',{maximumFractionDigits:0})
+    };
+  }
+
+  function getAllInputs(){
+    const data={};
+    for(const k of Object.keys(DEFAULTS)){ if($(k)) data[k] = $(k).value; }
+    return data;
+  }
+  function applyInputs(data){
+    for(const [k,v] of Object.entries(data)){ if($(k)) $(k).value = v; }
+    syncAllPills();
+    recalc();
+  }
+  function saveScenario(which){
+    localStorage.setItem(`mapping_roi_scenario_${which}`, JSON.stringify(getAllInputs()));
+    alert(`Saved Scenario ${which}.`);
+  }
+  function loadScenario(which){
+    const raw = localStorage.getItem(`mapping_roi_scenario_${which}`);
+    if(!raw) return alert(`No saved Scenario ${which}.`);
+    applyInputs(JSON.parse(raw));
+    $('presetSelect').value='custom';
+  }
+
+  function resetDefaults(){
+    for(const [k,v] of Object.entries(DEFAULTS)){ if($(k)) $(k).value = v; }
+    $('presetSelect').value='custom';
+    syncAllPills();
+    recalc();
+  }
+
+  function loadPreset(name){
+    if(!PRESETS[name]) return;
+    for(const [k,v] of Object.entries(DEFAULTS)){ if($(k)) $(k).value = v; }
+    for(const [k,v] of Object.entries(PRESETS[name])){ if($(k)) $(k).value = v; }
+    $('presetSelect').value='custom';
+    syncAllPills();
+    recalc();
+  }
+
+  function deltaText(newVal, oldVal){
+    if(!isFinite(oldVal) || oldVal===0) return `<span class="neu">—</span>`;
+    const diff = newVal-oldVal; const pct = diff/oldVal*100;
+    const cls = diff>=0?'pos':'neg'; const sign = diff>=0?'+':'';
+    return `<span class="${cls}">${sign}${pct.toFixed(1)}% vs baseline</span>`;
+  }
+
+  // Charts
+  let chartPerf=null, chartLeak=null, chartSens=null;
+
+  function initCharts(){
+    chartPerf = new Chart($('chartPerf').getContext('2d'),{
+      type:'bar',
+      data:{ labels:['Baseline','With Mapping'],
+        datasets:[
+          {label:'Bookings', data:[0,0], backgroundColor:'#93c5fd', yAxisID:'y1'},
+          {label:'Revenue (Margin)', data:[0,0], backgroundColor:'#2563eb', yAxisID:'y'}
+        ]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ title:{display:true,text:'Baseline vs With Mapping'} },
+        scales:{
+          y:{position:'left', title:{display:true,text:'Revenue'}},
+          y1:{position:'right', grid:{drawOnChartArea:false}, title:{display:true,text:'Bookings'}}
+        }}
+    });
+
+    chartLeak = new Chart($('chartLeak').getContext('2d'),{
+      type:'bar',
+      data:{ labels:['Baseline (Bad Data)','Remaining (Bad Data)'],
+        datasets:[
+          {label:'Cancellation margin loss', data:[0,0], backgroundColor:'#ef4444'},
+          {label:'Support cost', data:[0,0], backgroundColor:'#f59e0b'}
+        ]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ title:{display:true,text:'Leakage breakdown (bad-data-caused)'} },
+        scales:{ x:{stacked:true}, y:{stacked:true} }
+      }
+    });
+
+    chartSens = new Chart($('chartSens').getContext('2d'),{
+      type:'line',
+      data:{ labels:['0.5x','0.75x','1.0x','1.25x','1.5x'],
+        datasets:[{label:'Net monthly impact', data:[0,0,0,0,0], borderColor:'#10b981',
+          backgroundColor:'rgba(16,185,129,.10)', fill:true, tension:.25}]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ title:{display:true,text:'Sensitivity: overall effectiveness multiplier'} }
+      }
+    });
+  }
+
+  function computeModel(mult=1){
+    const sessions = Math.max(0,num('sessions'));
+    const rSL = pct01('ctr_list'), rLP = pct01('ctr_pdp'), rPR = pct01('ctr_room'), rRB = pct01('cvr_book');
+    const aov = Math.max(0,num('aov')), take = pct01('take_rate'), toolCost = Math.max(0,num('tool_cost'));
+    const cxRate = pct01('cx_rate'), cxBad = pct01('cx_data_cause');
+    const tkPer1k = Math.max(0,num('support_ratio')), tkBad = pct01('support_data_cause'), tkCost = Math.max(0,num('cost_per_ticket'));
+    const imp = { dup:pct01('imp_dup'), geo:pct01('imp_geo'), room:pct01('imp_room'), img:pct01('imp_img'), amen:pct01('imp_amen'), cont:pct01('imp_cont') };
+
+    const base_book = sessions*rSL*rLP*rPR*rRB;
+    const base_rev = base_book*aov*take;
+
+    const base_cx_bad_loss = base_book*cxRate*cxBad*aov*take;
+    const base_tk_bad_cost = (base_book/1000)*tkPer1k*tkBad*tkCost;
+
+    function stepLift(prefix){
+      const wDup=num(`w_${prefix}_dup`), wGeo=num(`w_${prefix}_geo`), wRoom=num(`w_${prefix}_room`), wImg=num(`w_${prefix}_img`), wAmen=num(`w_${prefix}_amen`);
+      const wContBlend=0.5;
+      const sum = imp.dup*wDup + imp.geo*wGeo + imp.room*wRoom + (imp.img+imp.cont*wContBlend)*wImg + (imp.amen+imp.cont*wContBlend)*wAmen;
+      return clamp(sum*mult,0,2);
+    }
+
+    const newSL = clamp(rSL*(1+stepLift('sl')),0,1);
+    const newLP = clamp(rLP*(1+stepLift('lp')),0,1);
+    const newPR = clamp(rPR*(1+stepLift('pr')),0,1);
+    const newRB = clamp(rRB*(1+stepLift('rb')),0,1);
+
+    const map_book = sessions*newSL*newLP*newPR*newRB;
+    const map_rev = map_book*aov*take;
+
+    const volMult = base_book>0 ? map_book/base_book : 1;
+
+    const effCx = clamp(num('eff_cancel'),0,1);
+    const effTk = clamp(num('eff_ticket'),0,1);
+
+    // simple leakage reduction factor (defensible): average improvement × efficacy × multiplier
+    const avgImp = (imp.dup+imp.geo+imp.room+imp.img+imp.amen+imp.cont)/6;
+    const redCx = clamp(avgImp*effCx*mult,0,1);
+    const redTk = clamp(avgImp*effTk*mult,0,1);
+
+    const proj_cx_loss = base_cx_bad_loss*volMult;
+    const proj_tk_cost = base_tk_bad_cost*volMult;
+
+    const saved_cx = proj_cx_loss*redCx;
+    const saved_tk = proj_tk_cost*redTk;
+
+    const delta_rev = map_rev-base_rev;
+    const net = delta_rev+saved_cx+saved_tk-toolCost;
+
+    const risk=[];
+    if(base_book<=1) risk.push("Baseline bookings near zero; validate funnel rates.");
+    if(newSL>0.98||newLP>0.98||newPR>0.98||newRB>0.98) risk.push("A funnel step is near 100%; reduce weights.");
+    return { base_book, map_book, base_rev, map_rev, base_cx_bad_loss, base_tk_bad_cost, proj_cx_loss, proj_tk_cost, saved_cx, saved_tk, delta_rev, net, toolCost, redCx, redTk, risk };
+  }
+
+  function updateCharts(m){
+    if(!chartPerf || !chartLeak || !chartSens) return; // guard
+
+    chartPerf.data.datasets[0].data=[m.base_book,m.map_book];
+    chartPerf.data.datasets[1].data=[m.base_rev,m.map_rev];
+    chartPerf.update();
+
+    const remCx = clamp(m.proj_cx_loss - m.saved_cx,0,1e18);
+    const remTk = clamp(m.proj_tk_cost - m.saved_tk,0,1e18);
+
+    chartLeak.data.datasets[0].data=[m.base_cx_bad_loss, remCx];
+    chartLeak.data.datasets[1].data=[m.base_tk_bad_cost, remTk];
+    chartLeak.update();
+
+    const mults=[0.5,0.75,1.0,1.25,1.5];
+    chartSens.data.datasets[0].data = mults.map(x=>computeModel(x).net);
+    chartSens.update();
+  }
+
+  function recalc(){
+    // clamp percentage inputs
+    ['ctr_list','ctr_pdp','ctr_room','cvr_book','take_rate','cx_rate','cx_data_cause','support_data_cause']
+      .forEach(id=>$(id).value = clamp(num(id),0,100));
+
+    $('eff_cancel').value = clamp(num('eff_cancel'),0,1);
+    $('eff_ticket').value = clamp(num('eff_ticket'),0,1);
+
+    const m = computeModel(1.0);
+    const {money,numF}=formatters();
+
+    $('k_book').textContent = numF.format(Math.round(m.map_book));
+    $('d_book').innerHTML = deltaText(m.map_book,m.base_book);
+
+    $('k_rev').textContent = money.format(m.map_rev);
+    $('d_rev').innerHTML = deltaText(m.map_rev,m.base_rev);
+
+    $('k_cxsave').textContent = money.format(m.saved_cx);
+    $('k_supsave').textContent = money.format(m.saved_tk);
+
+    $('k_net').textContent = money.format(m.net);
+    $('k_net').className = `val ${m.net>=0?'pos':'neg'}`;
+
+    if(m.toolCost>0){
+      const roi = m.net/m.toolCost;
+      $('k_roi').textContent = `ROI: ${roi.toFixed(2)}x`;
+      $('k_roi').className = `delta ${roi>=0?'pos':'neg'}`;
+    } else {
+      $('k_roi').textContent = `ROI: ∞ (no module cost)`;
+      $('k_roi').className = `delta pos`;
+    }
+
+    $('breakEvenText').textContent =
+      m.toolCost<=0 ? "No module cost set → pure upside." :
+      (m.net>=0 ? "Profitable within the same month (positive net impact)." :
+      `Needs ${money.format(Math.abs(m.net))} more monthly value to break even.`);
+
+    if(m.risk.length===0){
+      $('k_risk').innerHTML = `<span class="pos">OK</span>`;
+      $('k_risk2').textContent = "Model within typical bounds.";
+    } else {
+      $('k_risk').innerHTML = `<span class="dangerTag">Review</span>`;
+      $('k_risk2').textContent = m.risk[0];
+    }
+
+    $('insightText').textContent =
+      `Estimated net monthly impact is ${money.format(m.net)} with ~${Math.round(m.redCx*100)}% reduction in bad-data cancellation loss and ~${Math.round(m.redTk*100)}% reduction in bad-data support cost (based on efficacy).`;
+
+    updateCharts(m);
+  }
+
+  function exportCSV(){
+    const m = computeModel(1.0);
+    const rows = [
+      ["Generated (ISO)", new Date().toISOString()],
+      ["Baseline bookings", m.base_book],
+      ["With mapping bookings", m.map_book],
+      ["Baseline revenue (margin)", m.base_rev],
+      ["With mapping revenue (margin)", m.map_rev],
+      ["Saved cancel loss", m.saved_cx],
+      ["Saved support cost", m.saved_tk],
+      ["Net impact", m.net],
+      ["Module cost", m.toolCost]
+    ];
+    const csv = rows.map(r => `"${String(r[0]).replaceAll('"','""')}", "${String(r[1]).replaceAll('"','""')}"`).join("\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download="hotels_mapping_roi_simulation.csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  window.addEventListener('load', ()=>{
+    initCharts();          // ✅ charts first
+    resetDefaults();       // ✅ sets values then recalc
+    $('presetSelect').addEventListener('change', (e)=>{
+      if(e.target.value==='custom') return;
+      loadPreset(e.target.value);
+    });
+  });
+</script>
+</body>
+</html>
