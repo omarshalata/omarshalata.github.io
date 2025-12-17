@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rebooking Engine Impact Simulator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --brand:#0f172a;
+      --accent:#3b82f6;
+      --success:#10b981;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --text:#334155;
+      --muted:#64748b;
+      --border:#e2e8f0;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      margin:0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    header{
+      background:var(--card);
+      border-bottom:1px solid var(--border);
+      padding:1rem 1.5rem;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:1rem;
+      flex-shrink:0;
+    }
+    h1{margin:0;font-size:1.2rem;font-weight:800;color:var(--brand)}
+    .subtitle{font-size:.85rem;color:var(--muted)}
+    .title-wrap{display:flex;flex-direction:column;gap:.15rem}
+    .badge{
+      padding:.25rem .5rem;
+      border-radius:999px;
+      font-size:.72rem;
+      font-weight:800;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+      border:1px solid var(--border);
+      background:#eef2ff;
+      color:#3730a3;
+      white-space:nowrap;
+    }
+    .badge.retention{background:#ecfeff;color:#155e75}
+    .badge.margin{background:#ecfdf5;color:#065f46}
+    .badge.balanced{background:#eff6ff;color:#1e40af}
+
+    .toolbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .btn, select{
+      background:white;
+      border:1px solid var(--border);
+      padding:.5rem .75rem;
+      border-radius:8px;
+      font-size:.85rem;
+      cursor:pointer;
+      color:var(--text);
+    }
+    .btn:hover, select:hover{border-color:#cbd5e1;background:#f1f5f9}
+    .btn-primary{
+      background:var(--brand);
+      color:white;
+      border-color:var(--brand);
+    }
+    .btn-primary:hover{background:#1e293b;border-color:#1e293b}
+
+    .container{display:flex;flex:1;overflow:hidden}
+    .left{
+      width:420px;
+      background:var(--card);
+      border-right:1px solid var(--border);
+      overflow:auto;
+      padding:1.25rem;
+      flex-shrink:0;
+      display:flex;
+      flex-direction:column;
+      gap:1.25rem;
+    }
+    .right{
+      flex:1;
+      overflow:auto;
+      padding:1.25rem;
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+    }
+
+    .section-title{
+      font-size:.75rem;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+      border-bottom:1px solid var(--border);
+      padding-bottom:.45rem;
+      margin-bottom:.75rem;
+    }
+    .row{margin-bottom:.85rem}
+    label{
+      display:flex;
+      justify-content:space-between;
+      gap:.75rem;
+      font-size:.86rem;
+      font-weight:600;
+      margin-bottom:.35rem;
+    }
+    .hint{font-weight:600;color:var(--muted)}
+    input[type="number"], select{
+      width:100%;
+      padding:.55rem .6rem;
+      border:1px solid var(--border);
+      border-radius:8px;
+      font-size:.9rem;
+    }
+    input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer}
+    .help{
+      cursor:help;
+      color:var(--muted);
+      border-bottom:1px dotted var(--muted);
+      font-weight:700;
+    }
+    .mini{font-size:.75rem;color:var(--muted);margin-top:.25rem}
+
+    .callout{
+      background:#eff6ff;
+      border:1px solid #bfdbfe;
+      border-radius:10px;
+      padding:.85rem;
+      color:#1e40af;
+      font-size:.92rem;
+    }
+
+    .kpis{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+      gap:1rem;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:1rem;
+      box-shadow:0 1px 3px rgba(0,0,0,.05);
+    }
+    .kpi-label{font-size:.78rem;color:var(--muted);font-weight:700;text-transform:uppercase}
+    .kpi-value{font-size:1.5rem;font-weight:900;color:var(--brand);margin:.45rem 0}
+    .kpi-sub{font-size:.82rem;color:var(--muted)}
+    .pos{color:var(--success)!important}
+    .neg{color:var(--danger)!important}
+    .blue{color:var(--accent)!important}
+
+    .charts{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:1rem;
+      min-height:320px;
+    }
+    .chart-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:1rem;
+      position:relative;
+      height:320px;
+    }
+    .chart-card.wide{grid-column:span 2;height:280px}
+
+    .ops-strip{
+      display:flex;
+      gap:1rem;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+      font-size:.9rem;
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      border-radius:12px;
+      padding:.85rem 1rem;
+      color:#9a3412;
+    }
+
+    details{
+      background:#f8fafc;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:.75rem 1rem;
+    }
+    summary{cursor:pointer;font-weight:800;color:var(--text)}
+    .formula{margin-top:.5rem;color:var(--muted);line-height:1.6;border-left:3px solid var(--accent);padding-left:.85rem}
+
+    footer{
+      background:var(--card);
+      border-top:1px solid var(--border);
+      padding:.9rem 1rem;
+      color:var(--muted);
+      font-size:.75rem;
+      text-align:center;
+      flex-shrink:0;
+    }
+
+    @media(max-width:1100px){
+      .container{flex-direction:column;overflow:auto}
+      .left{width:100%;border-right:none;border-bottom:1px solid var(--border)}
+      .charts{grid-template-columns:1fr}
+      .chart-card.wide{grid-column:span 1;height:320px}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+    <div class="title-wrap">
+      <h1>Rebooking Engine Simulator</h1>
+      <div class="subtitle">Quantify savings, margin impact, ops friction, and retention lift</div>
+    </div>
+    <span class="badge balanced" id="strategyBadge">Balanced</span>
+  </div>
+
+  <div class="toolbar">
+    <select id="currency" title="Currency" onchange="runSim()">
+      <option value="USD">USD ($)</option>
+      <option value="SAR">SAR (﷼)</option>
+      <option value="EUR">EUR (€)</option>
+      <option value="GBP">GBP (£)</option>
+    </select>
+
+    <select id="preset" onchange="applyPreset()" title="Presets">
+      <option value="custom">Custom</option>
+      <option value="pilot">Pilot (Conservative)</option>
+      <option value="scale">Scale (Aggressive)</option>
+    </select>
+
+    <button class="btn" onclick="resetDefaults()">Reset</button>
+    <button class="btn btn-primary" onclick="exportCSV()">Export CSV</button>
+  </div>
+</header>
+
+<div class="container">
+  <!-- LEFT: INPUTS -->
+  <div class="left">
+
+    <div class="card">
+      <div class="section-title">1. Volume & Economics</div>
+
+      <div class="row">
+        <label>Monthly Bookings</label>
+        <input type="number" id="vol_bookings" value="50000" min="0" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Avg Booking Value (AOV)</label>
+        <input type="number" id="econ_aov" value="300" min="0" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Take Rate (%)</label>
+        <input type="number" id="econ_take_rate" value="12" step="0.1" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Avg Support Cost per Case</label>
+        <input type="number" id="econ_support_cost" value="8" step="0.5" min="0" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>
+          <span>Unique Benefited User Share (%) <span class="help" title="Not every rebook is a unique user. This avoids inflated retention value.">?</span></span>
+          <span class="hint" id="lbl_unique">70%</span>
+        </label>
+        <input type="range" id="uniq_share" min="0" max="100" value="70" oninput="updateUniqueLabel(); runSim()">
+        <div class="mini">Example: 70% means 100 rebooks ≈ 70 unique users who experienced the perk.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">2. Eligibility & Price Drop</div>
+
+      <div class="row">
+        <label>Eligible for Rebook (%) <span class="help" title="Free cancellation + supplier supported window.">?</span></label>
+        <input type="number" id="funnel_eligibility" value="60" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Price Drop Probability (%) <span class="help" title="% of eligible bookings that see a lower price later.">?</span></label>
+        <input type="number" id="funnel_drop_prob" value="15" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Avg Price Drop Depth (%)</label>
+        <input type="number" id="funnel_drop_depth" value="12" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Rebook Success Rate (%) <span class="help" title="Technical + supplier success for cancel/rebook.">?</span></label>
+        <input type="number" id="funnel_success" value="90" oninput="runSim()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3. Ops & Risk</div>
+
+      <div class="row">
+        <label>Txn Cost per Rebook</label>
+        <input type="number" id="ops_txn_cost" value="1.50" step="0.1" min="0" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Refund Handling Rate (%)</label>
+        <input type="number" id="ops_refund_rate" value="10" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Avg Refund Processing Cost</label>
+        <input type="number" id="ops_refund_cost" value="3.00" min="0" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Support Case Rate (%)</label>
+        <input type="number" id="ops_support_rate" value="5" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Abuse/Fraud Loss (% of Rebook GMV) <span class="help" title="Explicitly modeled as % of rebook GMV (label matches calculation).">?</span></label>
+        <input type="number" id="ops_fraud_rate" value="0.10" step="0.05" oninput="runSim()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">4. Value Sharing Strategy</div>
+
+      <div class="row">
+        <label>
+          <span>Share Savings to Customer</span>
+          <span>
+            <b class="blue" id="lbl_cust_share">70%</b>
+            &nbsp;|&nbsp; OTA <b class="pos" id="lbl_ota_share">30%</b>
+          </span>
+        </label>
+        <input type="range" id="strat_share" min="0" max="100" value="70" oninput="updateShareLabels(); runSim()">
+      </div>
+
+      <div class="row">
+        <label>
+          <span>% of OTA Retained Savings Kept as Margin <span class="help" title="Some OTAs reinvest savings into competitiveness instead of margin.">?</span></span>
+          <span class="hint" id="lbl_margin_keep">80%</span>
+        </label>
+        <input type="range" id="margin_keep" min="0" max="100" value="80" oninput="updateMarginKeepLabel(); runSim()">
+        <div class="mini">If 80%, then 20% of OTA savings is assumed used for price competitiveness (not counted as margin).</div>
+      </div>
+
+      <div class="row" style="display:flex;gap:.6rem;align-items:center;margin-top:.25rem;">
+        <input type="checkbox" id="strat_perk" onchange="runSim()">
+        <label for="strat_perk" style="margin:0;font-weight:700">Enable “Premium Perk Mode” (boosts retention lift)</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">5. Growth & Retention</div>
+
+      <div class="row">
+        <label>Baseline Repeat Rate (%)</label>
+        <input type="number" id="grow_base_rate" value="30" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Retention Lift (%) <span class="help" title="Incremental lift applied to baseline repeat rate for benefited users.">?</span></label>
+        <input type="number" id="grow_lift" value="15" oninput="runSim()">
+      </div>
+
+      <div class="row">
+        <label>Annual Bookings per User</label>
+        <input type="number" id="grow_freq" value="2.5" step="0.1" min="0" oninput="runSim()">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: RESULTS -->
+  <div class="right">
+
+    <div class="callout">
+      <strong>Scenario Focus:</strong> <span id="focusMsg">Loading…</span>
+    </div>
+
+    <div class="kpis">
+      <div class="card">
+        <div class="kpi-label">Successful Rebooks (Mo)</div>
+        <div class="kpi-value" id="kpi_rebooks">0</div>
+        <div class="kpi-sub" id="kpi_rebooks_pct">0% of bookings</div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">Savings Delivered to Customers (Mo)</div>
+        <div class="kpi-value blue" id="kpi_cust">—</div>
+        <div class="kpi-sub">Direct customer value</div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">OTA Net Profit Impact (Mo)</div>
+        <div class="kpi-value" id="kpi_net">—</div>
+        <div class="kpi-sub" id="kpi_net_sub">After ops + abuse</div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">Incremental Retention Profit (Annual)</div>
+        <div class="kpi-value pos" id="kpi_ret">—</div>
+        <div class="kpi-sub" id="kpi_ret_sub">From benefited unique users</div>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="chart-card">
+        <canvas id="chartShare"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <canvas id="chartWater"></canvas>
+      </div>
+
+      <div class="chart-card wide">
+        <canvas id="chartHorizon"></canvas>
+      </div>
+    </div>
+
+    <div class="ops-strip">
+      <div><strong>Operational Friction</strong></div>
+      <div>New Support Cases: <b id="ops_cases">0</b>/mo</div>
+      <div>Total Ops & Abuse Cost: <b id="ops_cost" class="neg">—</b></div>
+      <div>Break-even Rebooks (Mo): <b id="ops_breakeven">—</b></div>
+    </div>
+
+    <details class="card">
+      <summary>How it works (Calculations)</summary>
+      <div class="formula">
+        <p><strong>1) Funnel</strong><br>
+          Candidates = Bookings × Eligibility × PriceDropProb<br>
+          Successful Rebooks = Candidates × SuccessRate
+        </p>
+        <p><strong>2) Gross Savings</strong><br>
+          Gross Savings = Rebooks × AOV × DropDepth%
+        </p>
+        <p><strong>3) Value Split</strong><br>
+          Customer Savings = Gross Savings × CustomerShare<br>
+          OTA Retained Savings = Gross Savings × (1 − CustomerShare)<br>
+          OTA Margin Uplift = OTA Retained Savings × MarginKeep%
+        </p>
+        <p><strong>4) Costs</strong><br>
+          Txn Cost = Rebooks × TxnCost<br>
+          Refund Ops = Rebooks × RefundRate × RefundCost<br>
+          Support Ops = (Rebooks × SupportRate) × SupportCost<br>
+          Abuse/Fraud = RebookGMV × AbuseRate (explicitly labeled)
+        </p>
+        <p><strong>5) OTA Net Monthly Impact</strong><br>
+          Net = OTA Margin Uplift − (Txn + Refund + Support + Abuse)
+        </p>
+        <p><strong>6) Retention Value</strong> (annual incremental profit for benefited unique users)<br>
+          Benefited Unique Users = Rebooks × UniqueUserShare<br>
+          NewRepeatRate = clamp( BaseRepeat × (1 + Lift), 0..1 )<br>
+          IncrementalProfit = (New − Base) × AnnualFreq × (AOV × TakeRate)
+        </p>
+      </div>
+    </details>
+  </div>
+</div>
+
+<footer>
+  <strong>Assumptions & Disclaimer:</strong> This is a simulation tool using user inputs. Relationships are modeled linearly within practical ranges.
+  “Margin Keep %” and “Unique User Share %” are included to avoid overstating value. Actual results vary by supplier terms, seasonality, and implementation quality.
+</footer>
+
+<script>
+  // -----------------------------
+  // Helpers (clamp + safe parsing)
+  // -----------------------------
+  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+  const num = (id) => {
+    const el = document.getElementById(id);
+    const v = parseFloat(el.value);
+    return Number.isFinite(v) ? v : 0;
+  };
+  const isChecked = (id) => document.getElementById(id).checked;
+
+  function fmtCurrency(value){
+    const curr = document.getElementById('currency').value;
+    const f = new Intl.NumberFormat('en-US', { style:'currency', currency: curr, maximumFractionDigits:0 });
+    return f.format(value || 0);
+  }
+  function fmtNum(value){
+    const f = new Intl.NumberFormat('en-US', { maximumFractionDigits:0 });
+    return f.format(value || 0);
+  }
+
+  // -----------------------------
+  // State + Defaults + Charts
+  // -----------------------------
+  let chartShare, chartWater, chartHorizon;
+
+  const defaults = {
+    vol_bookings: 50000,
+    econ_aov: 300,
+    econ_take_rate: 12,
+    econ_support_cost: 8,
+    uniq_share: 70,
+
+    funnel_eligibility: 60,
+    funnel_drop_prob: 15,
+    funnel_drop_depth: 12,
+    funnel_success: 90,
+
+    ops_txn_cost: 1.5,
+    ops_refund_rate: 10,
+    ops_refund_cost: 3,
+    ops_support_rate: 5,
+    ops_fraud_rate: 0.10,
+
+    strat_share: 70,
+    margin_keep: 80,
+    strat_perk: false,
+
+    grow_lift: 15,
+    grow_base_rate: 30,
+    grow_freq: 2.5
+  };
+
+  window.onload = () => {
+    initCharts();
+    updateShareLabels();
+    updateMarginKeepLabel();
+    updateUniqueLabel();
+    runSim();
+  };
+
+  // -----------------------------
+  // UI label updates
+  // -----------------------------
+  function updateShareLabels(){
+    const share = clamp(parseInt(num('strat_share')), 0, 100);
+    document.getElementById('lbl_cust_share').innerText = `${share}%`;
+    document.getElementById('lbl_ota_share').innerText = `${100 - share}%`;
+  }
+
+  function updateMarginKeepLabel(){
+    const v = clamp(parseInt(num('margin_keep')), 0, 100);
+    document.getElementById('lbl_margin_keep').innerText = `${v}%`;
+  }
+
+  function updateUniqueLabel(){
+    const v = clamp(parseInt(num('uniq_share')), 0, 100);
+    document.getElementById('lbl_unique').innerText = `${v}%`;
+  }
+
+  // -----------------------------
+  // Presets / Reset
+  // -----------------------------
+  function applyPreset(){
+    const type = document.getElementById('preset').value;
+    if(type === 'custom') return;
+
+    const presets = {
+      pilot: {
+        ...defaults,
+        funnel_eligibility: 20,
+        funnel_success: 75,
+        ops_support_rate: 15,
+        ops_txn_cost: 2.5,
+        strat_share: 55,
+        margin_keep: 70,
+        uniq_share: 80
+      },
+      scale: {
+        ...defaults,
+        funnel_eligibility: 85,
+        funnel_success: 98,
+        ops_support_rate: 2,
+        ops_txn_cost: 0.5,
+        strat_share: 80,
+        margin_keep: 85,
+        uniq_share: 65
+      }
+    };
+
+    applyValues(presets[type]);
+  }
+
+  function resetDefaults(){
+    document.getElementById('preset').value = 'custom';
+    applyValues(defaults);
+  }
+
+  function applyValues(data){
+    Object.keys(data).forEach(k => {
+      const el = document.getElementById(k);
+      if(!el) return;
+      if(el.type === 'checkbox') el.checked = !!data[k];
+      else el.value = data[k];
+    });
+    updateShareLabels();
+    updateMarginKeepLabel();
+    updateUniqueLabel();
+    runSim();
+  }
+
+  // -----------------------------
+  // Core Simulation
+  // -----------------------------
+  function getInputs(){
+    // Clamp all percent inputs to [0,100]
+    const bookings = Math.max(0, num('vol_bookings'));
+    const aov = Math.max(0, num('econ_aov'));
+    const take = clamp(num('econ_take_rate'), 0, 100) / 100;
+    const supportCost = Math.max(0, num('econ_support_cost'));
+    const uniqShare = clamp(num('uniq_share'), 0, 100) / 100;
+
+    const eligibility = clamp(num('funnel_eligibility'), 0, 100) / 100;
+    const dropProb = clamp(num('funnel_drop_prob'), 0, 100) / 100;
+    const dropDepth = clamp(num('funnel_drop_depth'), 0, 100) / 100;
+    const success = clamp(num('funnel_success'), 0, 100) / 100;
+
+    const txnCost = Math.max(0, num('ops_txn_cost'));
+    const refundRate = clamp(num('ops_refund_rate'), 0, 100) / 100;
+    const refundCost = Math.max(0, num('ops_refund_cost'));
+    const supportRate = clamp(num('ops_support_rate'), 0, 100) / 100;
+    const abuseRate = clamp(num('ops_fraud_rate'), 0, 100) / 100;
+
+    const custShare = clamp(num('strat_share'), 0, 100) / 100;
+    const marginKeep = clamp(num('margin_keep'), 0, 100) / 100;
+    const perkMode = isChecked('strat_perk');
+
+    const baseRepeat = clamp(num('grow_base_rate'), 0, 100) / 100;
+    const lift = clamp(num('grow_lift'), 0, 200) / 100; // allow >100% lift but clamp later
+    const freq = Math.max(0, num('grow_freq'));
+
+    return {
+      bookings, aov, take, supportCost, uniqShare,
+      eligibility, dropProb, dropDepth, success,
+      txnCost, refundRate, refundCost, supportRate, abuseRate,
+      custShare, marginKeep, perkMode,
+      baseRepeat, lift, freq
+    };
+  }
+
+  function runSim(){
+    const i = getInputs();
+
+    // 1) Funnel
+    const candidates = i.bookings * i.eligibility * i.dropProb;
+    const rebooks = candidates * i.success;
+
+    // 2) Gross savings
+    const grossSavings = rebooks * i.aov * i.dropDepth;
+
+    // 3) Split + margin keep
+    const custSavings = grossSavings * i.custShare;
+    const otaRetainedSavings = grossSavings * (1 - i.custShare);
+    const otaMarginUplift = otaRetainedSavings * i.marginKeep;
+
+    // 4) Costs (ops + abuse)
+    const rebookAov = i.aov * (1 - i.dropDepth);
+    const rebookGmv = rebooks * rebookAov;
+
+    const costTxn = rebooks * i.txnCost;
+    const costRefund = rebooks * i.refundRate * i.refundCost;
+    const cases = rebooks * i.supportRate;
+    const costSupport = cases * i.supportCost;
+    const costAbuse = rebookGmv * i.abuseRate;
+
+    const totalCost = costTxn + costRefund + costSupport + costAbuse;
+
+    // 5) Net monthly impact
+    const netMonthly = otaMarginUplift - totalCost;
+
+    // 6) Retention value (annual incremental profit) with unique-user correction
+    const effectiveLift = i.perkMode ? (i.lift * 1.5) : i.lift;
+    const benefitedUsers = rebooks * i.uniqShare;
+
+    const profitPerBooking = i.aov * i.take;
+
+    const baseRepeatVol = benefitedUsers * i.baseRepeat * i.freq;
+    const baseFutureProfit = baseRepeatVol * profitPerBooking;
+
+    const newRepeatRate = clamp(i.baseRepeat * (1 + effectiveLift), 0, 1);
+    const newRepeatVol = benefitedUsers * newRepeatRate * i.freq;
+    const newFutureProfit = newRepeatVol * profitPerBooking;
+
+    const retentionAnnual = newFutureProfit - baseFutureProfit;
+
+    // KPI UI
+    document.getElementById('kpi_rebooks').innerText = fmtNum(Math.round(rebooks));
+    const pct = i.bookings > 0 ? (rebooks / i.bookings) * 100 : 0;
+    document.getElementById('kpi_rebooks_pct').innerText = `${pct.toFixed(1)}% of bookings`;
+
+    document.getElementById('kpi_cust').innerText = fmtCurrency(custSavings);
+
+    const kpiNet = document.getElementById('kpi_net');
+    kpiNet.innerText = fmtCurrency(netMonthly);
+    kpiNet.className = `kpi-value ${netMonthly >= 0 ? 'pos' : 'neg'}`;
+
+    document.getElementById('kpi_ret').innerText = fmtCurrency(retentionAnnual);
+    document.getElementById('kpi_ret_sub').innerText =
+      `Assumes ~${fmtNum(Math.round(benefitedUsers))} unique benefited users/year-cohort`;
+
+    // Ops strip
+    document.getElementById('ops_cases').innerText = fmtNum(Math.round(cases));
+    document.getElementById('ops_cost').innerText = fmtCurrency(totalCost);
+
+    // Break-even rebooks
+    // Per-rebook margin contribution = (otaMarginUplift / rebooks) if rebooks>0, else compute from unit formula:
+    // otaMarginUpliftPerRebook = (aov*dropDepth) * (1-custShare) * marginKeep
+    const unitMargin = (i.aov * i.dropDepth) * (1 - i.custShare) * i.marginKeep;
+    const unitCost = i.txnCost + (i.refundRate * i.refundCost) + (i.supportRate * i.supportCost) + (rebookAov * i.abuseRate);
+    const unitNet = unitMargin - unitCost;
+    const breakeven = unitNet > 0 ? Math.ceil(totalCost / unitNet) : Infinity;
+    document.getElementById('ops_breakeven').innerText = (breakeven === Infinity) ? 'Not reachable (negative unit economics)' : fmtNum(breakeven);
+
+    // Focus + badge
+    let focus = '';
+    let badgeText = '';
+    let badgeClass = 'badge balanced';
+
+    if(i.custShare >= 0.65){
+      focus = `You’re prioritizing <strong>Customer Loyalty</strong> (high customer share). This is typically best for premium propositions and retention-led growth.`;
+      badgeText = 'Retention Focused';
+      badgeClass = 'badge retention';
+    } else if(i.custShare <= 0.35){
+      focus = `You’re prioritizing <strong>Margin Expansion</strong> (low customer share). This works when rebooking is positioned as an internal profitability lever.`;
+      badgeText = 'Margin Focused';
+      badgeClass = 'badge margin';
+    } else {
+      focus = `You’re running a <strong>Balanced</strong> strategy, splitting savings between customer value and OTA economics.`;
+      badgeText = 'Balanced';
+      badgeClass = 'badge balanced';
+    }
+
+    // Add margin-keep commentary
+    if(i.marginKeep < 0.6){
+      focus += ` <span style="color:#1e40af">Note:</span> A large portion of OTA savings is modeled as reinvested into competitiveness (low “margin keep”).`;
+    }
+
+    document.getElementById('focusMsg').innerHTML = focus;
+    const sb = document.getElementById('strategyBadge');
+    sb.innerText = badgeText;
+    sb.className = badgeClass;
+
+    // Charts
+    updateCharts({
+      custSavings, otaRetainedSavings,
+      otaMarginUplift, totalCost, netMonthly,
+      retentionAnnual
+    });
+  }
+
+  // -----------------------------
+  // Charts
+  // -----------------------------
+  function initCharts(){
+    // 1) Share Doughnut: ONLY gross savings split (Customer vs OTA Retained)
+    chartShare = new Chart(document.getElementById('chartShare'), {
+      type:'doughnut',
+      data:{
+        labels:['Customer Savings Share','OTA Retained Savings Share'],
+        datasets:[{
+          data:[1,1],
+          backgroundColor:['#3b82f6','#10b981'],
+          borderWidth:0
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          title:{display:true,text:'Gross Savings Split (Share)'},
+          legend:{position:'bottom', labels:{boxWidth:12}}
+        }
+      }
+    });
+
+    // 2) Waterfall: floating bars for (Margin Uplift) - (Costs) = (Net)
+    chartWater = new Chart(document.getElementById('chartWater'), {
+      type:'bar',
+      data:{
+        labels:['OTA Margin Uplift','Ops & Abuse Costs','Net Monthly Impact'],
+        datasets:[{
+          label:'$ Impact',
+          data:[
+            { x:'OTA Margin Uplift', y:[0, 0] },
+            { x:'Ops & Abuse Costs', y:[0, 0] },
+            { x:'Net Monthly Impact', y:[0, 0] },
+          ],
+          backgroundColor:['#10b981','#ef4444','#3b82f6'],
+          borderRadius:8,
+          borderSkipped:false
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        parsing:{ xAxisKey:'x', yAxisKey:'y' },
+        plugins:{
+          title:{display:true,text:'Monthly Economics Waterfall'},
+          legend:{display:false},
+          tooltip:{
+            callbacks:{
+              label:(ctx)=>{
+                const y = ctx.raw.y;
+                const val = (Array.isArray(y) ? (y[1]-y[0]) : y);
+                return ` ${fmtCurrency(val)}`;
+              }
+            }
+          }
+        },
+        scales:{
+          y:{ beginAtZero:true }
+        }
+      }
+    });
+
+    // 3) Horizon: short vs long term (annualized net vs retention annual)
+    chartHorizon = new Chart(document.getElementById('chartHorizon'), {
+      type:'bar',
+      data:{
+        labels:['Net Impact (Annualized)','Retention Profit (Annual)'],
+        datasets:[{
+          label:'Projected Value',
+          data:[0,0],
+          backgroundColor:['#94a3b8','#8b5cf6'],
+          borderRadius:8,
+          borderSkipped:false
+        }]
+      },
+      options:{
+        indexAxis:'y',
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          title:{display:true,text:'Short-term vs Long-term Value'},
+          legend:{display:false},
+          tooltip:{
+            callbacks:{ label:(ctx)=>` ${fmtCurrency(ctx.raw)}` }
+          }
+        },
+        scales:{
+          x:{ beginAtZero:true }
+        }
+      }
+    });
+  }
+
+  function updateCharts(m){
+    // Doughnut split (avoid divide-by-zero visual issues)
+    const total = m.custSavings + m.otaRetainedSavings;
+    const cust = total > 0 ? m.custSavings : 0;
+    const ota = total > 0 ? m.otaRetainedSavings : 0;
+    chartShare.data.datasets[0].data = [cust, ota];
+    chartShare.update();
+
+    // Waterfall as floating bars:
+    // Bar1: [0, otaMarginUplift]
+    // Bar2: [otaMarginUplift, otaMarginUplift - totalCost] (downward if cost > 0)
+    // Bar3: [0, netMonthly]
+    const start1 = 0;
+    const end1 = m.otaMarginUplift;
+
+    const start2 = end1;
+    const end2 = end1 - m.totalCost;
+
+    const start3 = 0;
+    const end3 = m.netMonthly;
+
+    // Update colors for net bar based on sign
+    chartWater.data.datasets[0].backgroundColor = [
+      '#10b981',
+      '#ef4444',
+      (m.netMonthly >= 0 ? '#3b82f6' : '#ef4444')
+    ];
+
+    chartWater.data.datasets[0].data = [
+      { x:'OTA Margin Uplift', y:[start1, end1] },
+      { x:'Ops & Abuse Costs', y:[start2, end2] },
+      { x:'Net Monthly Impact', y:[start3, end3] }
+    ];
+    chartWater.update();
+
+    // Horizon: annualized net + retention annual
+    const netAnnualized = m.netMonthly * 12;
+    chartHorizon.data.datasets[0].data = [netAnnualized, m.retentionAnnual];
+
+    // Color net annualized bar if negative
+    chartHorizon.data.datasets[0].backgroundColor = [
+      (netAnnualized >= 0 ? '#94a3b8' : '#ef4444'),
+      '#8b5cf6'
+    ];
+    chartHorizon.update();
+  }
+
+  // -----------------------------
+  // Export CSV
+  // -----------------------------
+  function exportCSV(){
+    const i = getInputs();
+
+    // Recompute once (same as runSim, but producing stable export values)
+    const candidates = i.bookings * i.eligibility * i.dropProb;
+    const rebooks = candidates * i.success;
+
+    const grossSavings = rebooks * i.aov * i.dropDepth;
+    const custSavings = grossSavings * i.custShare;
+    const otaRetainedSavings = grossSavings * (1 - i.custShare);
+    const otaMarginUplift = otaRetainedSavings * i.marginKeep;
+
+    const rebookAov = i.aov * (1 - i.dropDepth);
+    const rebookGmv = rebooks * rebookAov;
+
+    const costTxn = rebooks * i.txnCost;
+    const costRefund = rebooks * i.refundRate * i.refundCost;
+    const cases = rebooks * i.supportRate;
+    const costSupport = cases * i.supportCost;
+    const costAbuse = rebookGmv * i.abuseRate;
+    const totalCost = costTxn + costRefund + costSupport + costAbuse;
+
+    const netMonthly = otaMarginUplift - totalCost;
+
+    const effectiveLift = i.perkMode ? (i.lift * 1.5) : i.lift;
+    const benefitedUsers = rebooks * i.uniqShare;
+    const profitPerBooking = i.aov * i.take;
+
+    const baseRepeatVol = benefitedUsers * i.baseRepeat * i.freq;
+    const baseFutureProfit = baseRepeatVol * profitPerBooking;
+
+    const newRepeatRate = clamp(i.baseRepeat * (1 + effectiveLift), 0, 1);
+    const newRepeatVol = benefitedUsers * newRepeatRate * i.freq;
+    const newFutureProfit = newRepeatVol * profitPerBooking;
+
+    const retentionAnnual = newFutureProfit - baseFutureProfit;
+
+    const rows = [
+      ["Metric","Value"],
+      ["Currency", document.getElementById('currency').value],
+      ["Monthly Bookings", i.bookings],
+      ["Successful Rebooks (Mo)", Math.round(rebooks)],
+      ["Gross Savings (Mo)", grossSavings.toFixed(2)],
+      ["Customer Savings (Mo)", custSavings.toFixed(2)],
+      ["OTA Retained Savings (Mo)", otaRetainedSavings.toFixed(2)],
+      ["OTA Margin Uplift (Mo)", otaMarginUplift.toFixed(2)],
+      ["Ops & Abuse Costs (Mo)", totalCost.toFixed(2)],
+      ["OTA Net Impact (Mo)", netMonthly.toFixed(2)],
+      ["Retention Profit (Annual)", retentionAnnual.toFixed(2)],
+      ["Unique Benefited User Share (%)", (i.uniqShare*100).toFixed(0)],
+      ["Margin Keep (%)", (i.marginKeep*100).toFixed(0)],
+      ["Customer Share (%)", (i.custShare*100).toFixed(0)],
+      ["Timestamp", new Date().toISOString()]
+    ];
+
+    const csv = "data:text/csv;charset=utf-8," + rows.map(r => r.join(",")).join("\n");
+    const link = document.createElement("a");
+    link.href = encodeURI(csv);
+    link.download = "rebooking_engine_simulation.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+</script>
+</body>
+</html>
