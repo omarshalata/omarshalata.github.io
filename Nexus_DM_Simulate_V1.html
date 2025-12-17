@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynamic Markup & Profit Simulator (OTA)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;        /* Indigo */
+      --primary-hover: #4f46e5;
+      --secondary: #10b981;      /* Emerald */
+      --bg-body: #f3f4f6;
+      --bg-card: #ffffff;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 1.15rem; font-weight: 800; color: #0b1220; }
+    .subtitle { font-size: 0.875rem; color: var(--text-muted); font-weight: 500; margin-top: 0.2rem; }
+
+    .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .btn {
+      padding: 0.55rem 0.85rem;
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      color: #0b1220;
+    }
+    .btn:hover { background: #f9fafb; border-color: #d1d5db; }
+    .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+    select.btn {
+      appearance: none;
+      padding-right: 2rem;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #6b7280 50%),
+        linear-gradient(135deg, #6b7280 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) calc(50% - 3px),
+        calc(100% - 12px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+    }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .col-inputs {
+      width: 410px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 1.25rem;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+
+    .col-results {
+      flex: 1;
+      padding: 1.25rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    footer {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding: 0.9rem 1.25rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      font-weight: 800;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .input-group { margin-bottom: 0.9rem; }
+    .input-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      font-weight: 650;
+      margin-bottom: 0.35rem;
+      color: #0b1220;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    .hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-bottom: 1px dotted #9ca3af;
+      cursor: help;
+      max-width: 190px;
+      text-align: right;
+    }
+
+    input[type="number"], select {
+      width: 100%;
+      padding: 0.55rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      outline: none;
+      background: white;
+      color: #111827;
+    }
+    input[type="number"]:focus, select:focus {
+      border-color: #c7d2fe;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+    .range-val { color: var(--primary); font-weight: 800; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 0.9rem;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .card h3 {
+      margin: 0;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+    .card .value { font-size: 1.55rem; font-weight: 900; margin: 0.55rem 0 0.25rem; color: #0b1220; }
+    .card .sub { font-size: 0.875rem; font-weight: 650; color: #111827; }
+    .pos { color: var(--secondary) !important; }
+    .neg { color: var(--danger) !important; }
+
+    details {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.65rem;
+    }
+    summary {
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .insight-box {
+      background: linear-gradient(to right, #eef2ff, #ffffff);
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    .insight-title { font-weight: 900; color: var(--primary); margin-bottom: 0.3rem; font-size: 0.9rem; }
+    .insight-text { font-size: 0.95rem; color: #374151; font-style: italic; }
+
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.9rem;
+    }
+    .chart-container {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      height: 310px;
+      position: relative;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      border: 1px solid transparent;
+    }
+    .badge-danger { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .badge-success { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+    .badge-warn { background: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+    .badge-neutral { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+
+    .mini-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .muted { color: var(--text-muted); font-size: 0.8rem; }
+
+    hr.sep { border: 0; border-top: 1px dashed var(--border); margin: 0.65rem 0; }
+
+    @media (max-width: 1024px) {
+      .main-container { flex-direction: column; overflow: auto; }
+      .col-inputs { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      .charts-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Dynamic Markup Simulator</h1>
+    <div class="subtitle">Optimize profit vs. volume using elasticity + competitive guardrails</div>
+  </div>
+
+  <div class="toolbar">
+    <select id="currency" class="btn" onchange="runSim()">
+      <option value="USD">USD ($)</option>
+      <option value="SAR">SAR (﷼)</option>
+      <option value="EUR">EUR (€)</option>
+      <option value="GBP">GBP (£)</option>
+    </select>
+
+    <select id="preset" class="btn" onchange="applyPreset()">
+      <option value="balanced">Strategy: Balanced</option>
+      <option value="aggressive">Strategy: Aggressive (High Margin)</option>
+      <option value="defensive">Strategy: Defensive (High Volume)</option>
+    </select>
+
+    <button class="btn" onclick="resetDefaults()">Reset</button>
+    <button class="btn btn-primary" onclick="exportCSV()">Export CSV</button>
+  </div>
+</header>
+
+<div class="main-container">
+  <!-- INPUTS -->
+  <div class="col-inputs">
+
+    <div>
+      <div class="section-title">1) Demand & Economics</div>
+
+      <div class="input-group">
+        <label>Monthly Sessions <span class="hint" title="Top-of-funnel sessions. Bookings = Sessions × Conversion.">Top funnel</span></label>
+        <input type="number" id="sessions" value="250000" min="0" step="1000" oninput="runSim()">
+      </div>
+
+      <div class="input-group">
+        <label>Baseline Conversion (%) <span class="hint" title="Baseline booking CVR (before any markup change).">Baseline CVR</span></label>
+        <input type="number" id="base_cvr" value="3.5" min="0" max="100" step="0.1" oninput="runSim()">
+      </div>
+
+      <div class="input-group">
+        <label>Avg Booking Value (AOV) <span class="hint" title="Average booking value before price change. Model adjusts AOV with price_ratio.">Baseline AOV</span></label>
+        <input type="number" id="aov" value="400" min="0" step="10" oninput="runSim()">
+      </div>
+
+      <div class="input-group">
+        <label>Baseline Take Rate (%) <span class="hint" title="Baseline margin as % of GMV. Must be below 95%.">Margin baseline</span></label>
+        <input type="number" id="base_take" value="15.0" min="0" max="95" step="0.1" oninput="runSim()">
+      </div>
+
+      <div class="input-group">
+        <label>Ops Cost per Booking <span class="hint" title="Fully-loaded cost per booking (support, payment ops, overhead).">Cost-to-serve</span></label>
+        <input type="number" id="ops_cost" value="5" min="0" step="0.5" oninput="runSim()">
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">2) Markup Control</div>
+
+      <div class="input-group">
+        <label>
+          <span>Target Markup Delta (Take Rate Δ)</span>
+          <span class="range-val" id="disp_delta">+0.0%</span>
+        </label>
+        <input type="range" id="markup_delta" min="-3" max="5" step="0.1" value="0"
+               oninput="updateDeltaDisplay(); runSim()">
+        <div class="mini-row muted" style="justify-content:space-between; margin-top: 2px;">
+          <span>-3% (Cheaper)</span>
+          <span>+5% (More expensive)</span>
+        </div>
+      </div>
+
+      <details>
+        <summary>Advanced: Elasticity & Segments</summary>
+        <div style="margin-top:0.9rem;">
+          <div class="muted" style="margin-bottom:0.75rem;">
+            Elasticity example: <b>-2.0</b> means +1% price → -2% volume (approx).
+          </div>
+
+          <div class="input-group">
+            <label>Budget Segment Weight (%) <span class="hint" title="Share of demand. If weights don’t sum to 100, simulator will normalize and warn.">Demand share</span></label>
+            <input type="number" id="seg_w_budget" value="30" min="0" max="100" step="1" oninput="runSim()">
+          </div>
+          <div class="input-group">
+            <label>Budget Elasticity <span class="hint" title="More negative = more price sensitive.">Sensitivity</span></label>
+            <input type="number" id="elas_budget" value="-2.5" step="0.1" style="color:var(--danger)" oninput="runSim()">
+          </div>
+
+          <hr class="sep">
+
+          <div class="input-group">
+            <label>Mid Segment Weight (%) <span class="hint" title="Typically the largest share for OTAs.">Demand share</span></label>
+            <input type="number" id="seg_w_mid" value="50" min="0" max="100" step="1" oninput="runSim()">
+          </div>
+          <div class="input-group">
+            <label>Mid Elasticity <span class="hint" title="Mid sensitivity. Often between -1.0 and -2.0.">Sensitivity</span></label>
+            <input type="number" id="elas_mid" value="-1.4" step="0.1" style="color:var(--warning)" oninput="runSim()">
+          </div>
+
+          <hr class="sep">
+
+          <div class="input-group">
+            <label>Premium Segment Weight (%) <span class="hint" title="Typically less elastic.">Demand share</span></label>
+            <input type="number" id="seg_w_prem" value="20" min="0" max="100" step="1" oninput="runSim()">
+          </div>
+          <div class="input-group">
+            <label>Premium Elasticity <span class="hint" title="Less negative = more sticky demand.">Sensitivity</span></label>
+            <input type="number" id="elas_prem" value="-0.6" step="0.1" style="color:var(--secondary)" oninput="runSim()">
+          </div>
+
+          <div class="mini-row" style="margin-top:0.7rem;">
+            <span class="badge badge-neutral" id="weights_badge">Weights OK</span>
+            <span class="muted" id="weights_note"></span>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div>
+      <div class="section-title">3) Competitive Guardrails</div>
+
+      <div class="input-group">
+        <label>Competitor Price Index (Base) <span class="hint" title="1.00 = parity with market. 1.05 = you’re 5% more expensive at baseline.">Market parity</span></label>
+        <input type="number" id="comp_index" value="1.00" min="0.1" step="0.01" oninput="runSim()">
+      </div>
+
+      <div class="input-group">
+        <label>Max Allowed Price vs Market (±%) <span class="hint" title="Guardrail on absolute price gap vs market parity after markup change.">Guardrail</span></label>
+        <input type="number" id="max_price_delta" value="5.0" min="0" max="50" step="0.1" oninput="runSim()">
+      </div>
+
+      <div class="input-group" style="margin-bottom:0;">
+        <label style="align-items:center;">
+          <span>Enforce Guardrail (Clamp)</span>
+          <span class="hint" title="If enabled, simulator clamps markup to stay within the guardrail. Solver will optimize within constraints.">Constrained optimization</span>
+        </label>
+        <div class="mini-row">
+          <input type="checkbox" id="enforce_guardrail" checked onchange="runSim()">
+          <span class="badge badge-neutral" id="guardrail_badge">Guardrail ready</span>
+        </div>
+        <div class="muted" id="guardrail_note" style="margin-top:0.4rem;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="col-results">
+
+    <div class="insight-box">
+      <div class="insight-title">💡 Strategic Insight</div>
+      <div class="insight-text" id="insight_text">Calculating scenarios...</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="card">
+        <h3>Total Net Profit</h3>
+        <div class="value" id="kpi_profit">—</div>
+        <div class="sub" id="kpi_profit_delta">—</div>
+      </div>
+
+      <div class="card">
+        <h3>Bookings Volume</h3>
+        <div class="value" id="kpi_bookings">—</div>
+        <div class="sub" id="kpi_bookings_delta">—</div>
+      </div>
+
+      <div class="card">
+        <h3>Effective Take Rate</h3>
+        <div class="value" id="kpi_take">—</div>
+        <div class="sub" id="kpi_take_base" style="font-weight:650; color:var(--text-muted)">Base: —</div>
+      </div>
+
+      <div class="card">
+        <h3>Optimization Target</h3>
+        <div style="margin-top:0.55rem;">
+          <span class="badge badge-success" id="rec_badge">Rec: —</span>
+          <span class="badge badge-neutral" id="clamp_badge" style="margin-left:0.35rem; display:none;">Clamped</span>
+        </div>
+        <div class="sub" style="margin-top:0.55rem; font-size:0.78rem; color:var(--text-muted);">
+          Max-profit point (within guardrails if enabled)
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-container">
+        <canvas id="chartCurve"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="chartBars"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-container" style="height:250px;">
+      <canvas id="chartDemand"></canvas>
+    </div>
+
+    <details class="card" style="background:white;">
+      <summary>Formula & Calculation Logic</summary>
+      <div style="padding:0.9rem; font-size:0.85rem; color:var(--text-muted); line-height:1.7;">
+        <p><strong>1) Price change proxy (from take-rate change):</strong>
+          <br><code>price_ratio = (1 - base_take) / (1 - eff_take)</code>
+          <br><code>price_change_pct = price_ratio - 1</code>
+        </p>
+        <p><strong>2) Weighted elasticity:</strong>
+          <br><code>avg_elasticity = Σ(wᵢ × eᵢ) / Σ(wᵢ)</code>
+        </p>
+        <p><strong>3) Demand impact (linear approximation):</strong>
+          <br><code>new_cvr = base_cvr × max(0, 1 + avg_elasticity × price_change_pct)</code>
+        </p>
+        <p><strong>4) Profit:</strong>
+          <br><code>adjusted_aov = aov × price_ratio</code>
+          <br><code>revenue = (bookings × adjusted_aov) × eff_take</code>
+          <br><code>net_profit = revenue - (bookings × ops_cost)</code>
+        </p>
+        <p><em>The solver sweeps markup deltas and finds the peak net profit. If guardrails are enforced, it optimizes within constraints.</em></p>
+      </div>
+    </details>
+
+  </div>
+</div>
+
+<footer>
+  <strong>Assumptions & Disclaimer:</strong>
+  Linear elasticity within a small adjustment range. Competitive index is manual input (no real-time scraping). Results vary with seasonality, supplier mix, rank rules, and brand trust.
+</footer>
+
+<script>
+  // ---- GLOBAL STATE ----
+  let chartCurve, chartBars, chartDemand;
+
+  const DEFAULTS = {
+    currency: "USD",
+    preset: "balanced",
+    sessions: 250000,
+    base_cvr: 3.5,
+    aov: 400,
+    base_take: 15.0,
+    ops_cost: 5,
+    markup_delta: 0,
+    seg_w_budget: 30,
+    elas_budget: -2.5,
+    seg_w_mid: 50,
+    elas_mid: -1.4,
+    seg_w_prem: 20,
+    elas_prem: -0.6,
+    comp_index: 1.00,
+    max_price_delta: 5.0,
+    enforce_guardrail: true
+  };
+
+  const PRESETS = {
+    balanced: {
+      sessions: 250000, base_cvr: 3.5, aov: 400, base_take: 15.0, ops_cost: 5,
+      markup_delta: 0.0,
+      seg_w_budget: 30, elas_budget: -2.5,
+      seg_w_mid: 50, elas_mid: -1.4,
+      seg_w_prem: 20, elas_prem: -0.6,
+      comp_index: 1.00, max_price_delta: 5.0, enforce_guardrail: true
+    },
+    aggressive: {
+      sessions: 250000, base_cvr: 3.5, aov: 400, base_take: 15.0, ops_cost: 5,
+      markup_delta: 1.5,
+      seg_w_budget: 25, elas_budget: -2.2,
+      seg_w_mid: 55, elas_mid: -1.0,     // stickier
+      seg_w_prem: 20, elas_prem: -0.5,
+      comp_index: 1.00, max_price_delta: 6.0, enforce_guardrail: true
+    },
+    defensive: {
+      sessions: 250000, base_cvr: 3.5, aov: 400, base_take: 15.0, ops_cost: 5,
+      markup_delta: -1.0,
+      seg_w_budget: 35, elas_budget: -2.8,
+      seg_w_mid: 50, elas_mid: -1.8,     // more sensitive
+      seg_w_prem: 15, elas_prem: -0.7,
+      comp_index: 1.00, max_price_delta: 4.0, enforce_guardrail: true
+    }
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
+  const num = (id) => parseFloat($(id).value);
+  const safeNum = (id, fallback = 0) => {
+    const v = parseFloat($(id).value);
+    return Number.isFinite(v) ? v : fallback;
+  };
+
+  // ---- UI Helpers ----
+  function updateDeltaDisplay() {
+    const val = safeNum('markup_delta', 0);
+    const sign = val > 0 ? '+' : '';
+    $('disp_delta').innerText = `${sign}${val.toFixed(1)}%`;
+  }
+
+  function moneyFmt(currency) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 });
+  }
+  function numFmt() {
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+  }
+
+  function getDeltaHTML(newVal, oldVal) {
+    const diff = newVal - oldVal;
+    const pct = (oldVal !== 0 && Number.isFinite(oldVal)) ? ((diff / oldVal) * 100) : 0;
+    const color = diff >= 0 ? 'var(--secondary)' : 'var(--danger)';
+    const sign = diff >= 0 ? '+' : '';
+    return `<span style="color:${color}; font-weight:800">${sign}${pct.toFixed(1)}%</span>`;
+  }
+
+  // ---- Presets / Defaults ----
+  function setVal(id, v) {
+    const el = $(id);
+    if (!el) return;
+    if (el.type === 'checkbox') el.checked = !!v;
+    else el.value = v;
+  }
+
+  function resetDefaults() {
+    Object.entries(DEFAULTS).forEach(([k,v]) => setVal(k, v));
+    updateDeltaDisplay();
+    runSim();
+  }
+
+  function applyPreset() {
+    const p = $('preset').value || 'balanced';
+    const preset = PRESETS[p] || PRESETS.balanced;
+
+    // reset to defaults first
+    Object.entries(DEFAULTS).forEach(([k,v]) => setVal(k, v));
+    // apply preset overrides
+    Object.entries(preset).forEach(([k,v]) => setVal(k, v));
+
+    updateDeltaDisplay();
+    runSim();
+  }
+
+  // ---- Inputs ----
+  function getInputs() {
+    // Clamp basic percentages
+    const base_take = clamp(safeNum('base_take', 0) / 100, 0, 0.95);
+    const base_cvr  = clamp(safeNum('base_cvr', 0) / 100, 0, 1);
+
+    return {
+      sessions: Math.max(0, safeNum('sessions', 0)),
+      base_cvr,
+      aov: Math.max(0, safeNum('aov', 0)),
+      base_take,
+      ops_cost: Math.max(0, safeNum('ops_cost', 0)),
+      // delta in decimal take-rate units
+      delta: clamp(safeNum('markup_delta', 0) / 100, -0.30, 0.30),
+
+      // segments (weights in 0..1)
+      w_b: clamp(safeNum('seg_w_budget', 0) / 100, 0, 1),
+      e_b: safeNum('elas_budget', -2),
+      w_m: clamp(safeNum('seg_w_mid', 0) / 100, 0, 1),
+      e_m: safeNum('elas_mid', -1.4),
+      w_p: clamp(safeNum('seg_w_prem', 0) / 100, 0, 1),
+      e_p: safeNum('elas_prem', -0.6),
+
+      // guardrails
+      comp_index: Math.max(0.1, safeNum('comp_index', 1.0)),
+      max_price_delta: clamp(safeNum('max_price_delta', 0) / 100, 0, 0.50), // up to 50%
+      enforce_guardrail: $('enforce_guardrail').checked === true
+    };
+  }
+
+  // ---- Guardrail math ----
+  function deriveDeltaBoundsFromGuardrail(inputs) {
+    // Allowed price-vs-market:
+    // newIndex = comp_index * (1 + price_change_pct)
+    // Constraint: abs(newIndex - 1) <= max_price_delta
+    const maxD = inputs.max_price_delta;
+    const ci = inputs.comp_index;
+
+    const lowerIndex = 1 - maxD;
+    const upperIndex = 1 + maxD;
+
+    const pc_low  = (lowerIndex / ci) - 1;
+    const pc_high = (upperIndex / ci) - 1;
+
+    // Convert desired price change pc to eff_take via:
+    // (1 + pc) = (1 - base_take) / (1 - eff_take)
+    // => eff_take = 1 - (1 - base_take)/(1 + pc)
+    const bt = inputs.base_take;
+
+    const eff_low  = 1 - (1 - bt) / Math.max(1e-6, (1 + pc_low));
+    const eff_high = 1 - (1 - bt) / Math.max(1e-6, (1 + pc_high));
+
+    // keep within sane bounds
+    const effMin = clamp(Math.min(eff_low, eff_high), 0, 0.95);
+    const effMax = clamp(Math.max(eff_low, eff_high), 0, 0.95);
+
+    return {
+      pc_low, pc_high,
+      effMin, effMax,
+      deltaMin: effMin - bt,
+      deltaMax: effMax - bt
+    };
+  }
+
+  function clampDeltaToGuardrail(inputs, requestedDelta) {
+    const bounds = deriveDeltaBoundsFromGuardrail(inputs);
+
+    // Clamp eff_take directly into allowed range
+    const requestedEff = clamp(inputs.base_take + requestedDelta, 0, 0.95);
+    const clampedEff = clamp(requestedEff, bounds.effMin, bounds.effMax);
+    const clampedDelta = clampedEff - inputs.base_take;
+
+    return { clampedDelta, bounds, requestedEff, clampedEff };
+  }
+
+  // ---- Scenario calc ----
+  function calculateScenario(inputs, desiredDelta) {
+    let deltaUsed = desiredDelta;
+    let clamped = false;
+    let bounds = null;
+
+    // Apply guardrail clamp if enabled
+    if (inputs.enforce_guardrail) {
+      const clampRes = clampDeltaToGuardrail(inputs, desiredDelta);
+      deltaUsed = clampRes.clampedDelta;
+      bounds = clampRes.bounds;
+      clamped = Math.abs(deltaUsed - desiredDelta) > 1e-9;
+    }
+
+    // Effective take rate
+    const eff_take = clamp(inputs.base_take + deltaUsed, 0, 0.95);
+
+    // Price ratio and price change %
+    // ratio = (1 - base_take)/(1 - eff_take)
+    const denom = Math.max(1e-6, (1 - eff_take));
+    const price_ratio = (1 - inputs.base_take) / denom;
+    const price_change_pct = price_ratio - 1;
+
+    // Weighted elasticity (normalize if weights don't sum to 1)
+    const total_w = inputs.w_b + inputs.w_m + inputs.w_p;
+    const safeTotal = total_w > 1e-6 ? total_w : 1;
+    const avg_elasticity = ((inputs.w_b * inputs.e_b) + (inputs.w_m * inputs.e_m) + (inputs.w_p * inputs.e_p)) / safeTotal;
+
+    // Demand factor (linear)
+    let demand_factor = 1 + (avg_elasticity * price_change_pct);
+    if (demand_factor < 0) demand_factor = 0;
+
+    const new_cvr = clamp(inputs.base_cvr * demand_factor, 0, 1);
+    const bookings = inputs.sessions * new_cvr;
+
+    // Adjust AOV by price_ratio (reflects price change)
+    const adjusted_aov = inputs.aov * price_ratio;
+    const adjusted_gmv = bookings * adjusted_aov;
+
+    const revenue = adjusted_gmv * eff_take;
+    const total_ops = bookings * inputs.ops_cost;
+    const profit = revenue - total_ops;
+
+    // Competitive index after change
+    const newIndex = inputs.comp_index * (1 + price_change_pct);
+    const priceVsMarketPct = (newIndex - 1) * 100;
+    const violates = Math.abs(priceVsMarketPct) > (inputs.max_price_delta * 100) + 1e-9;
+
+    return {
+      bookings, profit, revenue, cvr: new_cvr,
+      eff_take, price_change_pct, price_ratio, adjusted_aov,
+      avg_elasticity, total_w,
+      newIndex, priceVsMarketPct, violates,
+      deltaUsed, desiredDelta, clamped, bounds
+    };
+  }
+
+  // ---- Main simulation ----
+  function runSim() {
+    // keep slider label accurate
+    updateDeltaDisplay();
+
+    const inputs = getInputs();
+    const curr = $('currency').value || 'USD';
+    const fmtMoney = moneyFmt(curr);
+    const fmtNum = numFmt();
+
+    // Weight validation badge
+    const weightSumPct = (inputs.w_b + inputs.w_m + inputs.w_p) * 100;
+    const weightOff = Math.abs(weightSumPct - 100) > 0.5; // allow small rounding
+    if (weightOff) {
+      $('weights_badge').className = 'badge badge-warn';
+      $('weights_badge').textContent = 'Weights normalized';
+      $('weights_note').textContent = `Entered: ${weightSumPct.toFixed(1)}% (sim will normalize).`;
+    } else {
+      $('weights_badge').className = 'badge badge-success';
+      $('weights_badge').textContent = 'Weights OK';
+      $('weights_note').textContent = `${weightSumPct.toFixed(0)}% total.`;
+    }
+
+    // Guardrail note
+    const boundsInfo = deriveDeltaBoundsFromGuardrail(inputs);
+    const guardPct = (inputs.max_price_delta * 100);
+    $('guardrail_note').textContent =
+      `Allowed price vs market: ±${guardPct.toFixed(1)}%. This maps to take-rate Δ range ≈ ${ (boundsInfo.deltaMin*100).toFixed(2)}% to ${ (boundsInfo.deltaMax*100).toFixed(2)}% (given Base Take).`;
+
+    // Baseline and current
+    const base = calculateScenario(inputs, 0);
+    const requestedDelta = inputs.delta;
+    const current = calculateScenario(inputs, requestedDelta);
+
+    // Guardrail badge
+    if (inputs.enforce_guardrail) {
+      if (current.clamped) {
+        $('guardrail_badge').className = 'badge badge-warn';
+        $('guardrail_badge').textContent = 'Clamped';
+      } else {
+        $('guardrail_badge').className = 'badge badge-success';
+        $('guardrail_badge').textContent = 'Enforced';
+      }
+    } else {
+      $('guardrail_badge').className = current.violates ? 'badge badge-danger' : 'badge badge-neutral';
+      $('guardrail_badge').textContent = current.violates ? 'Violates' : 'Not enforced';
+    }
+
+    // KPIs
+    $('kpi_profit').textContent = fmtMoney.format(current.profit);
+    $('kpi_profit_delta').innerHTML = getDeltaHTML(current.profit, base.profit);
+
+    $('kpi_bookings').textContent = fmtNum.format(current.bookings);
+    $('kpi_bookings_delta').innerHTML = getDeltaHTML(current.bookings, base.bookings);
+
+    $('kpi_take').textContent = (current.eff_take * 100).toFixed(2) + '%';
+    $('kpi_take_base').textContent = `Base: ${(inputs.base_take * 100).toFixed(2)}%`;
+
+    // Optimization sweep (within constraints if enforce enabled)
+    let sweepMin = -0.03;
+    let sweepMax =  0.05;
+
+    if (inputs.enforce_guardrail) {
+      // intersect default sweep with guardrail-mapped delta range
+      sweepMin = Math.max(sweepMin, boundsInfo.deltaMin);
+      sweepMax = Math.min(sweepMax, boundsInfo.deltaMax);
+      // if it collapses, still allow a tiny range around current deltaUsed
+      if (sweepMax <= sweepMin) {
+        const c = current.deltaUsed;
+        sweepMin = c - 0.005;
+        sweepMax = c + 0.005;
+      }
+    }
+
+    const sweepData = [];
+    let maxProfit = -Infinity;
+    let bestDelta = 0;
+    const step = 0.002;
+
+    for (let d = sweepMin; d <= sweepMax + 1e-9; d += step) {
+      const res = calculateScenario(inputs, d);
+      sweepData.push({ x: d * 100, y: res.profit });
+      if (res.profit > maxProfit) {
+        maxProfit = res.profit;
+        bestDelta = res.deltaUsed; // use effective delta (may be clamped)
+      }
+    }
+
+    const recPct = (bestDelta * 100).toFixed(2);
+    const recBadge = $('rec_badge');
+    recBadge.textContent = `Rec: ${bestDelta > 0 ? '+' : ''}${recPct}%`;
+    recBadge.className = bestDelta >= 0 ? 'badge badge-success' : 'badge badge-danger';
+
+    // Clamp badge in UI
+    if (current.clamped && inputs.enforce_guardrail) {
+      $('clamp_badge').style.display = 'inline-flex';
+      $('clamp_badge').textContent = `Clamped to ${(current.deltaUsed*100).toFixed(2)}%`;
+      $('clamp_badge').className = 'badge badge-warn';
+    } else {
+      $('clamp_badge').style.display = 'none';
+    }
+
+    // Strategic insight text
+    const isOptimum = Math.abs(current.deltaUsed - bestDelta) < 0.0015;
+
+    const priceVsMarket = current.priceVsMarketPct;
+    const marketText = `Price vs market after change: ${priceVsMarket >= 0 ? '+' : ''}${priceVsMarket.toFixed(1)}%.`;
+
+    let insight = '';
+    if (isOptimum) {
+      insight = `You are at the <strong>profit maximum</strong>${inputs.enforce_guardrail ? ' (within constraints)' : ''}. Increasing markup further loses too much volume via elasticity.`;
+    } else if (current.deltaUsed < bestDelta) {
+      insight = `Room to grow: raising markup toward <strong>${bestDelta > 0 ? '+' : ''}${recPct}%</strong> increases margin without sacrificing too much volume.`;
+    } else {
+      insight = `Caution: current markup is aggressive. The conversion drop is eroding total profit. Consider lowering toward <strong>${bestDelta > 0 ? '+' : ''}${recPct}%</strong>.`;
+    }
+
+    // Add guardrail context
+    if (!inputs.enforce_guardrail && current.violates) {
+      insight += ` <br><br><span class="badge badge-danger">Guardrail breached</span> ${marketText} Allowed: ±${(inputs.max_price_delta*100).toFixed(1)}%.`;
+    } else {
+      insight += ` <br><br><span class="badge badge-neutral">Market check</span> ${marketText}`;
+    }
+
+    // Add clamp note
+    if (inputs.enforce_guardrail && current.clamped) {
+      insight += ` <br><br><span class="badge badge-warn">Clamped</span> Requested Δ ${(requestedDelta*100).toFixed(2)}% adjusted to ${(current.deltaUsed*100).toFixed(2)}% to respect market guardrail.`;
+    }
+
+    $('insight_text').innerHTML = insight;
+
+    // Update charts
+    updateCharts(base, current, sweepData, bestDelta, current.deltaUsed, inputs);
+  }
+
+  // ---- Charting ----
+  function initCharts() {
+    // Profit optimization curve (numeric X)
+    const ctxCurve = $('chartCurve').getContext('2d');
+    chartCurve = new Chart(ctxCurve, {
+      type: 'line',
+      data: {
+        datasets: [
+          {
+            label: 'Projected Net Profit',
+            data: [],
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.10)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0
+          },
+          {
+            label: 'Current Strategy',
+            data: [],
+            pointRadius: 6,
+            pointBackgroundColor: '#10b981',
+            backgroundColor: '#10b981',
+            type: 'scatter'
+          },
+          {
+            label: 'Recommended Δ',
+            data: [],
+            pointRadius: 6,
+            pointBackgroundColor: '#f59e0b',
+            backgroundColor: '#f59e0b',
+            type: 'scatter'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: { display: true, text: 'Profit Optimization Curve (Take Rate Δ)' },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const x = ctx.raw?.x;
+                const y = ctx.raw?.y;
+                if (!Number.isFinite(x) || !Number.isFinite(y)) return '';
+                return `Δ: ${x.toFixed(2)}%, Profit: ${Math.round(y).toLocaleString()}`;
+              }
+            }
+          },
+          legend: { display: true }
+        },
+        scales: {
+          x: { type: 'linear', title: { display: true, text: 'Markup Delta (Take Rate Δ %)'} },
+          y: { display: false }
+        }
+      }
+    });
+
+    // Bars comparison
+    const ctxBars = $('chartBars').getContext('2d');
+    chartBars = new Chart(ctxBars, {
+      type: 'bar',
+      data: {
+        labels: ['Bookings', 'Net Profit'],
+        datasets: [
+          { label: 'Baseline', data: [0, 0], backgroundColor: '#e5e7eb' },
+          { label: 'Scenario', data: [0, 0], backgroundColor: ['#6366f1', '#10b981'] }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { title: { display: true, text: 'Baseline vs Scenario' } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    // Demand curve
+    const ctxDemand = $('chartDemand').getContext('2d');
+    chartDemand = new Chart(ctxDemand, {
+      type: 'line',
+      data: {
+        labels: ['-3%', '-2%', '-1%', '0%', '+1%', '+2%', '+3%', '+4%', '+5%'],
+        datasets: [{
+          label: 'Conversion Rate %',
+          data: [0,0,0,0,0,0,0,0,0],
+          borderColor: '#f59e0b',
+          borderDash: [5, 5],
+          tension: 0.25,
+          fill: false,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { title: { display: true, text: 'Demand Elasticity Impact (CVR vs Δ)' } }
+      }
+    });
+  }
+
+  function updateCharts(base, current, sweepData, bestDelta, userDeltaUsed, inputs) {
+    if (!chartCurve || !chartBars || !chartDemand) return;
+
+    // Curve line
+    chartCurve.data.datasets[0].data = sweepData;
+
+    // Current point
+    chartCurve.data.datasets[1].data = [{ x: userDeltaUsed * 100, y: current.profit }];
+
+    // Recommended point
+    const bestRes = calculateScenario(inputs, bestDelta);
+    chartCurve.data.datasets[2].data = [{ x: bestDelta * 100, y: bestRes.profit }];
+
+    chartCurve.update();
+
+    // Bars
+    chartBars.data.datasets[0].data = [base.bookings, base.profit];
+    chartBars.data.datasets[1].data = [current.bookings, current.profit];
+    chartBars.update();
+
+    // Demand points (fixed delta grid, but evaluated using the same guardrail setting)
+    const grid = [-0.03, -0.02, -0.01, 0, 0.01, 0.02, 0.03, 0.04, 0.05];
+    const demandPoints = grid.map(d => calculateScenario(inputs, d).cvr * 100);
+    chartDemand.data.datasets[0].data = demandPoints;
+    chartDemand.update();
+  }
+
+  // ---- CSV Export ----
+  function exportCSV() {
+    const inputs = getInputs();
+    const base = calculateScenario(inputs, 0);
+    const current = calculateScenario(inputs, inputs.delta);
+
+    // recompute best
+    const boundsInfo = deriveDeltaBoundsFromGuardrail(inputs);
+    let sweepMin = -0.03, sweepMax = 0.05;
+    if (inputs.enforce_guardrail) {
+      sweepMin = Math.max(sweepMin, boundsInfo.deltaMin);
+      sweepMax = Math.min(sweepMax, boundsInfo.deltaMax);
+      if (sweepMax <= sweepMin) {
+        const c = current.deltaUsed;
+        sweepMin = c - 0.005; sweepMax = c + 0.005;
+      }
+    }
+
+    let bestDelta = 0, maxProfit = -Infinity;
+    for (let d = sweepMin; d <= sweepMax + 1e-9; d += 0.002) {
+      const r = calculateScenario(inputs, d);
+      if (r.profit > maxProfit) { maxProfit = r.profit; bestDelta = r.deltaUsed; }
+    }
+
+    const rows = [
+      ["Metric", "Baseline", "Scenario"],
+      ["Generated (ISO)", new Date().toISOString(), ""],
+      ["Currency", $('currency').value, ""],
+      ["Sessions", inputs.sessions, ""],
+      ["Baseline CVR %", (inputs.base_cvr*100).toFixed(2), ""],
+      ["AOV (baseline)", inputs.aov, ""],
+      ["Base Take %", (inputs.base_take*100).toFixed(2), ""],
+      ["Requested Take Δ %", (inputs.delta*100).toFixed(2), ""],
+      ["Effective Take Δ % (used)", (current.deltaUsed*100).toFixed(2), ""],
+      ["Effective Take %", (current.eff_take*100).toFixed(2), ""],
+      ["Price Change %", (current.price_change_pct*100).toFixed(2), ""],
+      ["Avg Elasticity", current.avg_elasticity.toFixed(3), ""],
+      ["Bookings", Math.round(base.bookings), Math.round(current.bookings)],
+      ["Net Profit", Math.round(base.profit), Math.round(current.profit)],
+      ["Revenue", Math.round(base.revenue), Math.round(current.revenue)],
+      ["Market Index (base)", inputs.comp_index.toFixed(2), ""],
+      ["Market Gap % (after)", current.priceVsMarketPct.toFixed(2), ""],
+      ["Guardrail ±% (market gap)", (inputs.max_price_delta*100).toFixed(2), ""],
+      ["Guardrail Enforced", inputs.enforce_guardrail ? "Yes" : "No", ""],
+      ["Recommended Δ %", (bestDelta*100).toFixed(2), ""],
+      ["Recommended Profit", Math.round(maxProfit), ""]
+    ];
+
+    const csv = rows
+      .map(r => r.map(x => `"${String(x).replaceAll('"','""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "dynamic_markup_profit_sim.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ---- Init ----
+  window.addEventListener('load', () => {
+    initCharts();      // charts first
+    resetDefaults();   // then populate + runSim
+    updateDeltaDisplay();
+  });
+</script>
+
+</body>
+</html>
