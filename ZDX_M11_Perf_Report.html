@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Performance Report — April 2026 · Omar Shalata · ZDX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* Neutrals */
+    --white:    #ffffff;
+    --bg:       #fafafb;
+    --ink:      #0a0a0c;
+    --ink-2:    #1f1f24;
+    --ink-3:    #6b6b73;
+    --ink-4:    #a3a3ab;
+    --ink-5:    #d4d4d8;
+
+    /* Accents */
+    --orange:        #ff6b1a;
+    --orange-deep:   #e85d12;
+    --orange-soft:   #ffb27c;
+    --orange-glass:  rgba(255,107,26,0.10);
+    --orange-glass-2: rgba(255,107,26,0.18);
+
+    --purple:        #7c3aed;
+    --purple-deep:   #6d28d9;
+    --purple-soft:   #c4b5fd;
+    --purple-glass:  rgba(124,58,237,0.10);
+    --purple-glass-2: rgba(124,58,237,0.18);
+
+    /* Status (warm + modern) */
+    --st-done:    #14b870;
+    --st-active:  #ff6b1a;
+    --st-pending: #f59e0b;
+    --st-blocked: #ef4444;
+
+    --st-done-bg:    rgba(20,184,112,0.10);
+    --st-active-bg:  rgba(255,107,26,0.10);
+    --st-pending-bg: rgba(245,158,11,0.10);
+    --st-blocked-bg: rgba(239,68,68,0.10);
+
+    /* Glass */
+    --glass:         rgba(255,255,255,0.62);
+    --glass-strong:  rgba(255,255,255,0.82);
+    --glass-soft:    rgba(255,255,255,0.45);
+    --glass-border:  rgba(255,255,255,0.85);
+    --line:          rgba(10,10,12,0.06);
+    --line-2:        rgba(10,10,12,0.10);
+
+    /* Shadows */
+    --shadow-xs: 0 1px 2px rgba(10,10,12,0.04);
+    --shadow-sm: 0 2px 8px rgba(10,10,12,0.04), 0 1px 2px rgba(10,10,12,0.04);
+    --shadow-md: 0 8px 24px rgba(10,10,12,0.06), 0 2px 4px rgba(10,10,12,0.04);
+    --shadow-lg: 0 24px 64px rgba(10,10,12,0.08), 0 8px 16px rgba(10,10,12,0.04);
+    --shadow-orange: 0 12px 40px rgba(255,107,26,0.18);
+    --shadow-purple: 0 12px 40px rgba(124,58,237,0.18);
+
+    /* Radii */
+    --r-sm: 8px;
+    --r-md: 14px;
+    --r-lg: 22px;
+    --r-xl: 28px;
+    --r-2xl: 36px;
+
+    --font: 'Onest', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    --mono: 'Geist Mono', 'SF Mono', Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.55;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  /* ---------- AMBIENT BACKGROUND ---------- */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    width: 720px;
+    height: 720px;
+    border-radius: 50%;
+    filter: blur(120px);
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.55;
+  }
+  body::before {
+    background: radial-gradient(circle, var(--orange) 0%, transparent 65%);
+    top: -260px;
+    right: -240px;
+  }
+  body::after {
+    background: radial-gradient(circle, var(--purple) 0%, transparent 65%);
+    bottom: -260px;
+    left: -240px;
+  }
+
+  .ambient-mid {
+    position: fixed;
+    width: 480px; height: 480px;
+    top: 40%; left: 45%;
+    background: radial-gradient(circle, rgba(196,181,253,0.5) 0%, transparent 70%);
+    filter: blur(120px);
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  .report {
+    position: relative;
+    z-index: 1;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 56px 48px 96px;
+  }
+
+  /* ---------- GLASS CARD BASE ---------- */
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ---------- COVER ---------- */
+  .cover {
+    background: linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.55) 100%);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-2xl);
+    padding: 56px 56px 44px;
+    position: relative;
+    margin-bottom: 56px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -10%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, var(--orange-glass-2) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(40px);
+    pointer-events: none;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -50%; left: -10%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, var(--purple-glass-2) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(40px);
+    pointer-events: none;
+  }
+  .cover-inner { position: relative; z-index: 1; }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+  .brand-mark {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, var(--orange) 0%, var(--purple) 100%);
+    display: grid;
+    place-items: center;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+    box-shadow: var(--shadow-md);
+  }
+  .brand-text {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+  .brand-text b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .cover-title {
+    font-family: var(--font);
+    font-weight: 700;
+    font-size: 80px;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .cover-title .gradient {
+    background: linear-gradient(135deg, var(--orange) 0%, var(--purple) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .cover-sub {
+    font-size: 19px;
+    font-weight: 400;
+    color: var(--ink-3);
+    margin-bottom: 40px;
+    max-width: 600px;
+    letter-spacing: -0.01em;
+  }
+
+  .cover-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .cover-meta-item .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .cover-meta-item .value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  /* ---------- SECTIONS ---------- */
+  section { margin-bottom: 56px; }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-4);
+    letter-spacing: 0.14em;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 100px;
+    background: var(--white);
+    border: 1px solid var(--line);
+  }
+  .section-title {
+    font-weight: 700;
+    font-size: 32px;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    flex: 1;
+  }
+  .section-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+
+  /* ---------- EXEC SUMMARY ---------- */
+  .lede {
+    font-size: 21px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 920px;
+    margin-bottom: 36px;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+  }
+  .lede strong { font-weight: 600; color: var(--ink); }
+  .lede .accent-o { color: var(--orange); font-weight: 600; }
+  .lede .accent-p { color: var(--purple); font-weight: 600; }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .kpi {
+    background: var(--glass-strong);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    padding: 24px 24px 26px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .kpi.accent-o::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--orange) 0%, var(--orange-soft) 100%);
+  }
+  .kpi.accent-p::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple) 0%, var(--purple-soft) 100%);
+  }
+  .kpi.accent-mix::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--orange) 0%, var(--purple) 100%);
+  }
+  .kpi-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+  .kpi-value {
+    font-size: 44px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.035em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .kpi-value .unit {
+    font-size: 16px;
+    color: var(--ink-3);
+    font-weight: 500;
+    margin-left: 4px;
+    letter-spacing: -0.01em;
+  }
+  .kpi-sub {
+    font-size: 12.5px;
+    color: var(--ink-3);
+    line-height: 1.45;
+    font-weight: 400;
+  }
+  .kpi-sub b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- INITIATIVES ---------- */
+  .initiative-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .initiative {
+    background: var(--glass-strong);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    padding: 24px 26px 22px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .initiative:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .initiative-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .initiative-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-4);
+    letter-spacing: 0.14em;
+    font-weight: 500;
+  }
+  .initiative-num b { color: var(--ink-2); font-weight: 600; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pill::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .pill.no-dot::before { display: none; }
+
+  .status-delivered { background: var(--st-done-bg); color: var(--st-done); }
+  .status-progress  { background: var(--st-active-bg); color: var(--st-active); }
+  .status-ongoing   { background: var(--purple-glass); color: var(--purple); }
+
+  .initiative-title {
+    font-weight: 700;
+    font-size: 19px;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .initiative-body {
+    font-size: 13px;
+    color: var(--ink-3);
+    line-height: 1.55;
+    margin-bottom: 16px;
+    flex: 1;
+  }
+  .initiative-body strong { color: var(--ink-2); font-weight: 600; }
+
+  .initiative-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .meta-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    background: var(--white);
+    border: 1px solid var(--line);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-weight: 500;
+  }
+  .meta-tag b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- OPERATIONAL TRACKER ---------- */
+  .tracker {
+    background: var(--glass-strong);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .tracker-band {
+    color: white;
+    padding: 16px 26px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tracker-band-incubation {
+    background: linear-gradient(135deg, var(--orange) 0%, var(--orange-deep) 100%);
+  }
+  .tracker-band-zdx {
+    background: linear-gradient(135deg, var(--purple) 0%, var(--purple-deep) 100%);
+  }
+  .tracker-band-name {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .tracker-band-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+    font-weight: 500;
+  }
+  .tracker-band-spacer { flex: 1; }
+  .tracker-band-stat {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.95);
+    font-weight: 600;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 100px;
+    backdrop-filter: blur(8px);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  thead th {
+    background: var(--glass-soft);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 18px;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+  }
+  tbody td {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-2);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.6); }
+
+  .task-name {
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+
+  .pri-critical { background: var(--st-blocked-bg); color: var(--st-blocked); }
+  .pri-high     { background: var(--st-pending-bg); color: var(--st-pending); }
+  .pri-medium   { background: var(--purple-glass); color: var(--purple); }
+  .pri-low      { background: rgba(107,114,128,0.10); color: var(--ink-3); }
+
+  .st-done    { background: var(--st-done-bg);    color: var(--st-done); }
+  .st-active  { background: var(--st-active-bg);  color: var(--st-active); }
+  .st-pending { background: var(--st-pending-bg); color: var(--st-pending); }
+  .st-blocked { background: var(--st-blocked-bg); color: var(--st-blocked); }
+
+  td.depends, td.activity, td.due, td.load {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0;
+    font-weight: 500;
+  }
+  td.depends { font-style: italic; }
+
+  /* ---------- ARTIFACTS / ROI ---------- */
+  .artifacts-table {
+    background: var(--glass-strong);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .artifacts-table table thead th {
+    background: linear-gradient(135deg, rgba(255,107,26,0.06) 0%, rgba(124,58,237,0.06) 100%);
+  }
+  .artifacts-table td.art-num {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--ink-4);
+    font-size: 11px;
+    width: 40px;
+  }
+  .artifacts-table td.art-name {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.35;
+    max-width: 220px;
+  }
+  .artifacts-table td.art-name small {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-4);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .artifacts-table td.art-effort {
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--ink-2);
+    font-size: 12px;
+    text-align: center;
+  }
+  .artifacts-table td.art-value {
+    font-size: 12.5px;
+    color: var(--ink-2);
+    line-height: 1.4;
+    max-width: 280px;
+  }
+  .artifacts-table td.art-value b { color: var(--ink); font-weight: 700; }
+  .artifacts-table td.art-value .v-strong { color: var(--orange-deep); font-weight: 700; }
+  .artifacts-table td.art-value .v-strat { color: var(--purple-deep); font-weight: 600; }
+  .artifacts-table td.art-roi {
+    font-size: 12px;
+    color: var(--ink-3);
+    line-height: 1.4;
+    max-width: 240px;
+    font-style: italic;
+  }
+
+  .artifact-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .artifact-summary-card {
+    background: var(--glass-strong);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-xs);
+  }
+  .artifact-summary-card.tier-1 { border-left: 3px solid var(--orange); }
+  .artifact-summary-card.tier-2 { border-left: 3px solid var(--purple); }
+  .artifact-summary-card.tier-3 { border-left: 3px solid var(--st-done); }
+
+  .ascard-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .ascard-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+  .ascard-sub {
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+
+  /* ---------- ANALYTICS ---------- */
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .chart-card {
+    background: var(--glass-strong);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    padding: 26px 28px 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .chart-card.full { grid-column: 1 / -1; }
+
+  .chart-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+  .chart-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-bottom: 22px;
+    font-weight: 500;
+  }
+
+  .donut-wrap {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
+    align-items: center;
+  }
+  .donut-legend { display: flex; flex-direction: column; gap: 0; }
+  .donut-legend-item {
+    display: grid;
+    grid-template-columns: 14px 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .donut-legend-item:last-child { border-bottom: none; }
+  .legend-swatch {
+    width: 12px; height: 12px;
+    border-radius: 4px;
+  }
+  .legend-label { font-weight: 600; color: var(--ink); }
+  .legend-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+  .legend-pct {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ink);
+    min-width: 38px;
+    text-align: right;
+  }
+
+  .hbar-row {
+    display: grid;
+    grid-template-columns: 130px 1fr 56px;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .hbar-label {
+    font-size: 12px;
+    color: var(--ink-2);
+    font-weight: 600;
+  }
+  .hbar-track {
+    height: 14px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hbar-fill {
+    height: 100%;
+    border-radius: 100px;
+    display: block;
+    transition: width 0.6s ease;
+  }
+  .hbar-fill.f-orange { background: linear-gradient(90deg, var(--orange) 0%, var(--orange-soft) 100%); }
+  .hbar-fill.f-purple { background: linear-gradient(90deg, var(--purple) 0%, var(--purple-soft) 100%); }
+  .hbar-fill.f-mix    { background: linear-gradient(90deg, var(--orange) 0%, var(--purple) 100%); }
+  .hbar-value {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink);
+    text-align: right;
+    font-weight: 700;
+  }
+
+  .stacked-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .stacked-label {
+    font-size: 12px;
+    color: var(--ink-2);
+    font-weight: 600;
+  }
+  .stacked-bar {
+    height: 28px;
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    overflow: hidden;
+    background: var(--white);
+  }
+  .stacked-seg {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    transition: filter 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .stacked-seg:hover { filter: brightness(1.08); }
+  .seg-done    { background: linear-gradient(180deg, #1ace85 0%, var(--st-done) 100%); }
+  .seg-active  { background: linear-gradient(180deg, var(--orange-soft) 0%, var(--orange) 100%); }
+  .seg-pending { background: linear-gradient(180deg, #fbbf2c 0%, var(--st-pending) 100%); }
+  .seg-blocked { background: linear-gradient(180deg, #f87171 0%, var(--st-blocked) 100%); }
+
+  .legend-row {
+    display: flex;
+    gap: 18px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+  .legend-row span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-row span i {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+
+  /* Workload composition card */
+  .workload-comp {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 32px;
+    align-items: center;
+  }
+  .workload-segments {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .workload-seg {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+  }
+  .workload-seg-bar {
+    width: 4px;
+    height: 32px;
+    border-radius: 100px;
+    flex-shrink: 0;
+  }
+  .workload-seg-info { flex: 1; }
+  .workload-seg-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .workload-seg-desc {
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+  .workload-seg-num {
+    text-align: right;
+  }
+  .workload-seg-hours {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.025em;
+    line-height: 1;
+  }
+  .workload-seg-pct {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-3);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  /* ---------- POSTMORTEM ---------- */
+  .pm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .pm-block {
+    background: var(--glass-strong);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    padding: 26px 28px;
+    box-shadow: var(--shadow-sm);
+  }
+  .pm-block.went-well { border-top: 3px solid var(--st-done); }
+  .pm-block.friction  { border-top: 3px solid var(--st-blocked); }
+  .pm-block.recs      { border-top: 3px solid var(--orange); }
+  .pm-block.conclusion { border-top: 3px solid var(--purple); }
+
+  .pm-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+    letter-spacing: -0.015em;
+  }
+  .pm-icon {
+    width: 28px; height: 28px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: white;
+  }
+  .pm-icon.i-good { background: var(--st-done); }
+  .pm-icon.i-bad  { background: var(--st-blocked); }
+  .pm-icon.i-rec  { background: var(--orange); }
+  .pm-icon.i-end  { background: var(--purple); }
+
+  .pm-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-bottom: 18px;
+    font-weight: 500;
+    margin-left: 40px;
+  }
+
+  .pm-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pm-list li {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 8px;
+    align-items: baseline;
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.55;
+  }
+  .pm-list li::before {
+    content: counter(item, decimal-leading-zero);
+    counter-increment: item;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-4);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .pm-list { counter-reset: item; }
+  .pm-list b { color: var(--ink); font-weight: 700; }
+  .pm-list .accent-o { color: var(--orange-deep); font-weight: 600; }
+  .pm-list .accent-p { color: var(--purple-deep); font-weight: 600; }
+
+  .conclusion-prose {
+    font-size: 14.5px;
+    color: var(--ink-2);
+    line-height: 1.65;
+    letter-spacing: -0.005em;
+  }
+  .conclusion-prose p { margin-bottom: 14px; }
+  .conclusion-prose p:last-child { margin-bottom: 0; }
+  .conclusion-prose strong { color: var(--ink); font-weight: 600; }
+
+  .conclusion-quote {
+    margin: 16px 0;
+    padding: 16px 22px;
+    background: linear-gradient(135deg, var(--orange-glass) 0%, var(--purple-glass) 100%);
+    border-radius: var(--r-md);
+    border-left: 3px solid;
+    border-image: linear-gradient(180deg, var(--orange) 0%, var(--purple) 100%) 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+    line-height: 1.5;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    margin-top: 80px;
+    padding: 24px 32px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    font-weight: 500;
+  }
+  footer .mark {
+    font-family: var(--font);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  footer .mark .gradient {
+    background: linear-gradient(135deg, var(--orange) 0%, var(--purple) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    body { background: white; }
+    body::before, body::after, .ambient-mid { display: none; }
+    .report { padding: 24px; max-width: 100%; }
+    section { page-break-inside: avoid; }
+    .initiative, .chart-card, .pm-block, .kpi { page-break-inside: avoid; }
+    .glass, .kpi, .initiative, .tracker, .chart-card, .pm-block, .cover {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: white;
+    }
+  }
+
+  @media (max-width: 920px) {
+    .report { padding: 28px 18px 60px; }
+    .cover { padding: 32px 24px 24px; }
+    .cover-title { font-size: 48px; }
+    .cover-meta { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .initiative-grid { grid-template-columns: 1fr; }
+    .analytics-grid { grid-template-columns: 1fr; }
+    .pm-grid { grid-template-columns: 1fr; }
+    .donut-wrap { grid-template-columns: 1fr; }
+    .workload-comp { grid-template-columns: 1fr; }
+    .artifact-summary { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="ambient-mid"></div>
+<main class="report">
+
+  <!-- ============== COVER ============== -->
+  <header class="cover">
+    <div class="cover-inner">
+      <div class="brand-row">
+        <div class="brand-mark">Z</div>
+        <div class="brand-text"><b>ZDX</b> &nbsp;·&nbsp; Internal &nbsp;·&nbsp; Confidential</div>
+      </div>
+      <h1 class="cover-title">Performance<br/><span class="gradient">Report.</span></h1>
+      <div class="cover-sub">
+        Monthly review for the period of April 2026 — strategic deliverables, operational execution, artifact value, and forward postmortem.
+      </div>
+      <div class="cover-meta">
+        <div class="cover-meta-item">
+          <div class="label">Prepared By</div>
+          <div class="value">Omar Shalata</div>
+        </div>
+        <div class="cover-meta-item">
+          <div class="label">Reviewed By</div>
+          <div class="value">Founder · CEO</div>
+        </div>
+        <div class="cover-meta-item">
+          <div class="label">Reporting Period</div>
+          <div class="value">April 1 — 30, 2026</div>
+        </div>
+        <div class="cover-meta-item">
+          <div class="label">Document Type</div>
+          <div class="value">Performance Review</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============== EXECUTIVE SUMMARY ============== -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">§ 01</span>
+      <h2 class="section-title">Executive Summary</h2>
+      <span class="section-meta">At a Glance</span>
+    </div>
+
+    <p class="lede">
+      April was a <strong>delivery-heavy month</strong> — <span class="accent-o">nine of ten</span> strategic outputs landed and <span class="accent-p">10 of 23</span> operational tasks closed inside the cycle. The studio moved from internal preparation to externally-facing assets: the <strong>Noya Clinics proposal closed at v4</strong>, the <strong>Sawt AI proposal cleared founder review</strong>, and the <strong>ZDX Incubator stack</strong> went from concept to launch-ready. Total tracked load reached <strong>135 hours</strong> across authoring, operational tasks, and stakeholder meetings. Where execution slipped, the cause was almost always external — AWS payment activation gating four downstream tasks remains the principal drag.
+    </p>
+
+    <div class="kpi-grid">
+      <div class="kpi accent-o">
+        <div class="kpi-label">Strategic Deliverables</div>
+        <div class="kpi-value">10<span class="unit">items</span></div>
+        <div class="kpi-sub"><b>9 delivered</b> · 1 in active progression</div>
+      </div>
+      <div class="kpi accent-p">
+        <div class="kpi-label">Operational Tasks</div>
+        <div class="kpi-value">23<span class="unit">tasks</span></div>
+        <div class="kpi-sub"><b>43% done</b> · 17% active · 17% pending · 22% externally blocked</div>
+      </div>
+      <div class="kpi accent-mix">
+        <div class="kpi-label">Total Tracked Workload</div>
+        <div class="kpi-value">135<span class="unit">hrs</span></div>
+        <div class="kpi-sub"><b>61.5h ops</b> · 58h authoring · 15.5h meetings</div>
+      </div>
+      <div class="kpi accent-o">
+        <div class="kpi-label">Workstreams Active</div>
+        <div class="kpi-value">6<span class="unit">streams</span></div>
+        <div class="kpi-sub">Noya · Sawt · Nexus · Zaker · MQ B2B · ZDX Studio</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== STRATEGIC INITIATIVES ============== -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">§ 02</span>
+      <h2 class="section-title">Strategic Initiatives</h2>
+      <span class="section-meta">10 Major Deliverables</span>
+    </div>
+
+    <div class="initiative-grid">
+
+      <article class="initiative">
+        <div class="initiative-header">
+          <span class="initiative-num">01 · <b>NOYA CLINICS</b></span>
+          <span class="pill status-delivered">Done</span>
+        </div>
+        <h3 class="initiative-title">Noya Clinics Proposal — v4</h3>
+        <p class="initiative-body">
+          Closed the four-version proposal cycle for the Riyadh aesthetic-clinic group with a <strong>two-tier engagement model</strong>: Platform-Brand at <strong>SAR 1.9M – 2.65M</strong> and Operational Platform at <strong>SAR 600K – 900K</strong>. Embedded scope-assumption clause, KPI-trigger renegotiation language, data-ownership / exit-readiness clause, Phase 0 fixed at SAR 75K with walk-away rights, and optional AI Pilot carve-out. Appendix D documents 5-year TCO across five alternative paths.
+        </p>
+        <div class="initiative-meta">
+          <span class="meta-tag">Pipeline · <b>Karim / Waheed</b></span>
+          <span class="meta-tag">Versions · <b>v1 → v4</b></span>
+          <span class="meta-tag">Authoring · <b>16h</b></span>
+        </div>
+      </article>
+
+      <article class="initiative">
+        <div class="initiative-header">
+          <span class="initiative-num">02 · <b>SAWT AI</b></span>
+          <span class="pill status-delivered">Done</span>
+        </div>
+        <h3 class="initiative-title">Sawt AI Product Proposal</h3>
+        <p class="initiative-body">
+          Authored and submitted the Sawt AI product proposal with structured product framing, scope definition, and commercial terms. Full founder-review cycle completed; document signed off and lodged with the operational tracker. Anchors the next-stage commercial conversation.
+        </p>
+        <div class="initiative-meta">
+          <span class="meta-tag">Track · <b>Direct Service</b></span>
+          <span class="meta-tag">Status · <b>Closed</b></span>
+          <span class="meta-tag">Authoring · <b>5h</b></span>
+        </div>
+      </article>
+
+      <article class="initiative">
+        <div class="initiative-header">
+          <span class="initiative-num">03 · <b>NEXUS</b></span>
+          <span class="pill status-delivered">Done</span>
+        </div>
+        <h3 class="initiative-title">Nexus Financial Model</h3>
+        <p class="initiative-body">
+          Built the Nexus financial model end-to-end. Integrated unit economics, growth scenarios, and sensitivity inputs. Output is the operating reference for portfolio governance and investor conversations. Companion artefact to the Nexus UAT report (in-period WPR follow-up cycle with Badr / Ali).
+        </p>
+        <div class="initiative-meta">
+          <span class="meta-tag">Format · <b>Interactive Model</b></span>
+          <span class="meta-tag">Owner · <b>BD · Finance</b></span>
+          <span class="meta-tag">Authoring · <b>10h</b></span>
+        </div>
+      </article>
+
+      <article class="initiative">
+        <div class="initiative-header">
+          <span class="initiative-num">04 · <b>ZAKER</b></span>
+          <span class="pill status-delivered">Done</span>
+        </div>
+        <h3 class="initiative-title">Zaker LMS — Libyan Product PRD</h3>
+        <p class="initiative-body">
+          Authored the Zaker LMS Product Requirements Document scoped to the Libyan market entry. PRD covers user surfaces, pedagogical model, content strategy, and platform architecture. Coordinated with Ali Zaker on stakeholder follow-up; MVP document update closed in-period.
+        </p>
+        <div class="initiative-meta">
+          <span class="meta-tag">Market · <b>Libya</b></span>
+          <span class="meta-tag">Stage · <b>PRD Locked</b></span>
+          <span class="meta-tag">Authoring · <b>12h</b></span>
+        </div>
+      </article>
+
+      <article class="initiative">
+        <div class="initiative-header">
+          <span class="initiative-num">05 · <b>MQ B2B</b></span>
+          <span class="pill status-delivered">Done</span>
+        </div>
+        <h3 class="initiative-title">MQ — B2B Company Profile</h3>
+        <p class="initiative-body">
+          Produced the B2B-positioned company profile for MQ. Structured for outbound use: capability framing, proof points, and engagement model articulated for enterprise audiences. Asset is now in commercial circulation.
+        </p>
+        <div class="initiative-meta">
+          <span class="meta-tag">Asset · <b>B2B Profile</b></span>
+          <span class="meta-tag">Use · <b>Outbound · Pitch</b></span>
+          <span class="meta-tag">Authoring · <b>4h</b></span>
+        </div>
+      </article>
+
+      <article class="initiative">
+        <div class="initiative-header">
+          <span class="initiative-num">06 · <b>ZDX INCUBATOR</b></span>
+          <span class="pill status-delivered">Done</span>
+        </div>
+        <h3 class="initiative-title">ZDX Incubator — Program Content & Syllabus</h3>
+        <p class="initiative-body">
+          Drafted and locked the Incubator Program content and syllabus outline (<strong>10 hours of structured authorship</strong>). Companion artefact to the Optimized Incubator Value Proposition (EG / SA). Together these form the spine of the Incubator launch — gated guide, webinar flow, and pitch deck all derive from this core.
+        </p>
+        <div class="initiative-meta">
+          <span class="meta-tag">Authoring · <b>10h</b></span>
+          <span class="meta-tag">Downstream · <b>4 dependent assets</b></span>
+        </div>
+      </article>
+
+      <article class="initiative">
+        <div class="initiative-header">
+          <span class="initiative-num">07 · <b>HR</b></span>
+          <span class="pill status-delivered">Done</span>
+        </div>
+        <h3 class="initiative-title">Employment Contract — Finalized</h3>
+        <p class="initiative-body">
+          Finalized the standard employment contract template for ZDX hires. Establishes the legal baseline for Creative Director onboarding (May 1) and the GEO / Conversational Marketing roles in active recruitment. Removes a prior ad-hoc contracting friction point.
+        </p>
+        <div class="initiative-meta">
+          <span class="meta-tag">Scope · <b>All Hires</b></span>
+          <span class="meta-tag">Effective · <b>May 1</b></span>
+          <span class="meta-tag">Authoring · <b>3h</b></span>
+        </div>
+      </article>
+
+      <article class="initiative">
+        <div class="initiative-header">
+          <span class="initiative-num">08 · <b>HR</b></span>
+          <span class="pill status-delivered">Done</span>
+        </div>
+        <h3 class="initiative-title">HR Policy Framework</h3>
+        <p class="initiative-body">
+          Authored the ZDX HR policy. Codifies leave, performance review cadence, conduct, and remote-working norms. Pairs with the employment contract to give the studio its first complete people-operations baseline ahead of team scale-up.
+        </p>
+        <div class="initiative-meta">
+          <span class="meta-tag">Scope · <b>Studio-wide</b></span>
+          <span class="meta-tag">Pair · <b>w/ Contract</b></span>
+          <span class="meta-tag">Authoring · <b>5h</b></span>
+        </div>
+      </article>
+
+      <article class="initiative">
+        <div class="initiative-header">
+          <span class="initiative-num">09 · <b>TALENT</b></span>
+          <span class="pill status-progress">In Progress</span>
+        </div>
+        <h3 class="initiative-title">Creative Director & Team Recruitment</h3>
+        <p class="initiative-body">
+          Met with and selected <strong>Yousef Ayman as Creative Director</strong> (start date May 1). Two adjacent roles in active sourcing: <strong>GEO Specialist</strong> and <strong>Conversational Marketing & Automation Specialist</strong>, both Arabic / English bilingual. Two additional founder meetings scheduled in-period: Dr. Hadya (Program Director) and Dr. Hani Najuib (Startup Mindset Author).
+        </p>
+        <div class="initiative-meta">
+          <span class="meta-tag">Hires Closed · <b>1</b></span>
+          <span class="meta-tag">Open Roles · <b>2 active</b></span>
+          <span class="meta-tag">Process · <b>3h</b></span>
+        </div>
+      </article>
+
+      <article class="initiative">
+        <div class="initiative-header">
+          <span class="initiative-num">10 · <b>GOVERNANCE</b></span>
+          <span class="pill status-ongoing">Ongoing</span>
+        </div>
+        <h3 class="initiative-title">Stakeholder Alignment</h3>
+        <p class="initiative-body">
+          Sustained alignment cadence across portfolio and client stakeholders: Zaker stakeholder meeting closed, Badr / Ali Nexus WPR completed, follow-ups sequenced. Functions as the connective tissue across the strategic deliverables above — reduces re-work and ensures decisions are loaded into the right rooms.
+        </p>
+        <div class="initiative-meta">
+          <span class="meta-tag">Cadence · <b>Weekly · Bi-weekly</b></span>
+          <span class="meta-tag">Surface · <b>Multi-portfolio</b></span>
+          <span class="meta-tag">Meetings · <b>15.5h</b></span>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============== OPERATIONAL EXECUTION ============== -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">§ 03</span>
+      <h2 class="section-title">Operational Execution</h2>
+      <span class="section-meta">Bi-Weekly Tracker · Apr 19 – 30</span>
+    </div>
+
+    <div class="tracker">
+      <!-- Incubation Program Band -->
+      <div class="tracker-band tracker-band-incubation">
+        <span class="tracker-band-name">Incubation Program</span>
+        <span class="tracker-band-meta">16 tasks · 52h · Studio flagship launch</span>
+        <span class="tracker-band-spacer"></span>
+        <span class="tracker-band-stat">5 done · 4 active</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:34%">Task</th>
+            <th>Priority</th>
+            <th>Load</th>
+            <th>Due</th>
+            <th>Activity</th>
+            <th>Status</th>
+            <th>Depends On</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="task-name">Meeting Yousef Ayman — Creative Director (Start May 1)</td>
+            <td><span class="pill no-dot pri-high">High</span></td>
+            <td class="load">1h</td>
+            <td class="due">Apr 19</td>
+            <td class="activity">Recruitment</td>
+            <td><span class="pill st-done">Done</span></td>
+            <td class="depends">—</td>
+          </tr>
+          <tr>
+            <td class="task-name">Optimized Incubator Value Proposition (EG / SA)</td>
+            <td><span class="pill no-dot pri-critical">Critical</span></td>
+            <td class="load">4h</td>
+            <td class="due">Apr 20</td>
+            <td class="activity">Core Offering</td>
+            <td><span class="pill st-done">Done</span></td>
+            <td class="depends">—</td>
+          </tr>
+          <tr>
+            <td class="task-name">Contact and Meet Dr. Hadya — Program Director</td>
+            <td><span class="pill no-dot pri-high">High</span></td>
+            <td class="load">1h</td>
+            <td class="due">Apr 21</td>
+            <td class="activity">Recruitment</td>
+            <td><span class="pill st-pending">Pending</span></td>
+            <td class="depends">—</td>
+          </tr>
+          <tr>
+            <td class="task-name">Incubation Program — University / Gov Proposal</td>
+            <td><span class="pill no-dot pri-high">High</span></td>
+            <td class="load">1h</td>
+            <td class="due">Apr 21</td>
+            <td class="activity">Business</td>
+            <td><span class="pill st-active">Active</span></td>
+            <td class="depends">Value Proposition</td>
+          </tr>
+          <tr>
+            <td class="task-name">AWS Payment Gateway Activation</td>
+            <td><span class="pill no-dot pri-high">High</span></td>
+            <td class="load">2h</td>
+            <td class="due">Apr 23</td>
+            <td class="activity">Infrastructure</td>
+            <td><span class="pill st-blocked">Blocked</span></td>
+            <td class="depends">—</td>
+          </tr>
+          <tr>
+            <td class="task-name">Booking & Incubation Application Form (UAT)</td>
+            <td><span class="pill no-dot pri-high">High</span></td>
+            <td class="load">3h</td>
+            <td class="due">Apr 22</td>
+            <td class="activity">Website</td>
+            <td><span class="pill st-blocked">Blocked</span></td>
+            <td class="depends">AWS Payment Gateway</td>
+          </tr>
+          <tr>
+            <td class="task-name">Incubation Program Content & Syllabus Outline</td>
+            <td><span class="pill no-dot pri-high">High</span></td>
+            <td class="load">6h (10h)</td>
+            <td class="due">Apr 23</td>
+            <td class="activity">Core Offering</td>
+            <td><span class="pill st-done">Done</span></td>
+            <td class="depends">Value Proposition</td>
+          </tr>
+          <tr>
+            <td class="task-name">Social Media Campaign Calendar & Content Plan</td>
+            <td><span class="pill no-dot pri-critical">Critical</span></td>
+            <td class="load">6h</td>
+            <td class="due">Apr 23</td>
+            <td class="activity">Marketing</td>
+            <td><span class="pill st-done">Done</span></td>
+            <td class="depends">Value Proposition</td>
+          </tr>
+          <tr>
+            <td class="task-name">ZDX Website UAT + Launch</td>
+            <td><span class="pill no-dot pri-critical">Critical</span></td>
+            <td class="load">1h</td>
+            <td class="due">Apr 23</td>
+            <td class="activity">Website</td>
+            <td><span class="pill st-blocked">Blocked</span></td>
+            <td class="depends">—</td>
+          </tr>
+          <tr>
+            <td class="task-name">ZDX Social Media Activation (IG · LI · FB) + Brand</td>
+            <td><span class="pill no-dot pri-critical">Critical</span></td>
+            <td class="load">4h</td>
+            <td class="due">Apr 23</td>
+            <td class="activity">Marketing</td>
+            <td><span class="pill st-pending">Pending</span></td>
+            <td class="depends">ZDX Website + Social Plan</td>
+          </tr>
+          <tr>
+            <td class="task-name">Incubation Interview Bookings — Website Feature</td>
+            <td><span class="pill no-dot pri-medium">Medium</span></td>
+            <td class="load">4h</td>
+            <td class="due">Apr 26</td>
+            <td class="activity">Website</td>
+            <td><span class="pill st-blocked">Blocked</span></td>
+            <td class="depends">Application Form UAT</td>
+          </tr>
+          <tr>
+            <td class="task-name">Gated Guide PDF + Free Webinar Flow</td>
+            <td><span class="pill no-dot pri-medium">Medium</span></td>
+            <td class="load">8h</td>
+            <td class="due">Apr 26</td>
+            <td class="activity">Website</td>
+            <td><span class="pill st-active">Active</span></td>
+            <td class="depends">Content & Syllabus Outline</td>
+          </tr>
+          <tr>
+            <td class="task-name">Contact and Meet Dr. Hani Najuib — Startup Mindset Author</td>
+            <td><span class="pill no-dot pri-medium">Medium</span></td>
+            <td class="load">1h</td>
+            <td class="due">Apr 30</td>
+            <td class="activity">Recruitment</td>
+            <td><span class="pill st-pending">Pending</span></td>
+            <td class="depends">—</td>
+          </tr>
+          <tr>
+            <td class="task-name">ZDX Pitch Deck + Funding Plan</td>
+            <td><span class="pill no-dot pri-critical">Critical</span></td>
+            <td class="load">3h</td>
+            <td class="due">Apr 30</td>
+            <td class="activity">Business</td>
+            <td><span class="pill st-active">Active</span></td>
+            <td class="depends">Value Prop + Uni / Gov Proposal</td>
+          </tr>
+          <tr>
+            <td class="task-name">ZDX Insights — Series 1 (4 Articles) Writing & Editing</td>
+            <td><span class="pill no-dot pri-medium">Medium</span></td>
+            <td class="load">4h</td>
+            <td class="due">Apr 30</td>
+            <td class="activity">Media</td>
+            <td><span class="pill st-done">Done</span></td>
+            <td class="depends">Social Media Plan</td>
+          </tr>
+          <tr>
+            <td class="task-name">ZDX Video Podcast Episodes Plan & Promo Production</td>
+            <td><span class="pill no-dot pri-medium">Medium</span></td>
+            <td class="load">3h</td>
+            <td class="due">Apr 30</td>
+            <td class="activity">Media</td>
+            <td><span class="pill st-active">Active</span></td>
+            <td class="depends">Social Media Plan</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ZDX General Band -->
+      <div class="tracker-band tracker-band-zdx">
+        <span class="tracker-band-name">ZDX General</span>
+        <span class="tracker-band-meta">7 tasks · 9.5h · Portfolio &amp; client cadence</span>
+        <span class="tracker-band-spacer"></span>
+        <span class="tracker-band-stat">5 done · 1 blocked</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:34%">Task</th>
+            <th>Priority</th>
+            <th>Load</th>
+            <th>Due</th>
+            <th>Activity</th>
+            <th>Status</th>
+            <th>Depends On</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="task-name">Zaker Stakeholder Meeting — 8:15 PM</td>
+            <td><span class="pill no-dot pri-critical">Critical</span></td>
+            <td class="load">1h</td>
+            <td class="due">Apr 22</td>
+            <td class="activity">Zaker</td>
+            <td><span class="pill st-done">Done</span></td>
+            <td class="depends">—</td>
+          </tr>
+          <tr>
+            <td class="task-name">Sawt AI Product Proposal — 8:00 PM</td>
+            <td><span class="pill no-dot pri-critical">Critical</span></td>
+            <td class="load">2h</td>
+            <td class="due">Apr 19</td>
+            <td class="activity">Sawt AI</td>
+            <td><span class="pill st-done">Done</span></td>
+            <td class="depends">—</td>
+          </tr>
+          <tr>
+            <td class="task-name">Badr / Ali Nexus Sunday WPR Meeting</td>
+            <td><span class="pill no-dot pri-high">High</span></td>
+            <td class="load">1h</td>
+            <td class="due">Apr 20</td>
+            <td class="activity">Nexus</td>
+            <td><span class="pill st-done">Done</span></td>
+            <td class="depends">—</td>
+          </tr>
+          <tr>
+            <td class="task-name">Ali Zaker Follow Up</td>
+            <td><span class="pill no-dot pri-high">High</span></td>
+            <td class="load">30m</td>
+            <td class="due">Apr 21</td>
+            <td class="activity">Zaker</td>
+            <td><span class="pill st-done">Done</span></td>
+            <td class="depends">Zaker Stakeholder Meeting</td>
+          </tr>
+          <tr>
+            <td class="task-name">Zaker MVP Document Update</td>
+            <td><span class="pill no-dot pri-high">High</span></td>
+            <td class="load">1h</td>
+            <td class="due">Apr 22</td>
+            <td class="activity">Zaker</td>
+            <td><span class="pill st-done">Done</span></td>
+            <td class="depends">Zaker Follow Up</td>
+          </tr>
+          <tr>
+            <td class="task-name">Nexus UAT — Detailed Report</td>
+            <td><span class="pill no-dot pri-high">High</span></td>
+            <td class="load">4h</td>
+            <td class="due">Apr 26</td>
+            <td class="activity">Nexus</td>
+            <td><span class="pill st-blocked">Blocked</span></td>
+            <td class="depends">Nexus WPR Meeting</td>
+          </tr>
+          <tr>
+            <td class="task-name">Nexus Video Production Follow-Up</td>
+            <td><span class="pill no-dot pri-medium">Medium</span></td>
+            <td class="load">1h</td>
+            <td class="due">Apr 26</td>
+            <td class="activity">Nexus</td>
+            <td><span class="pill st-pending">Pending</span></td>
+            <td class="depends">Nexus UAT Report</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============== ARTIFACTS & ROI ============== -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">§ 04</span>
+      <h2 class="section-title">Delivered Artifacts &amp; ROI</h2>
+      <span class="section-meta">Output Inventory</span>
+    </div>
+
+    <div class="artifact-summary">
+      <div class="artifact-summary-card tier-1">
+        <div class="ascard-label">Direct Pipeline Value</div>
+        <div class="ascard-value">SAR 2.5M – 3.55M</div>
+        <div class="ascard-sub">Combined Noya tier ranges (Platform + Operational)</div>
+      </div>
+      <div class="artifact-summary-card tier-2">
+        <div class="ascard-label">Strategic Assets Delivered</div>
+        <div class="ascard-value">13 Artifacts</div>
+        <div class="ascard-sub">Across commercial, product, marketing, HR, operating</div>
+      </div>
+      <div class="artifact-summary-card tier-3">
+        <div class="ascard-label">Authoring Hours</div>
+        <div class="ascard-value">73.5h</div>
+        <div class="ascard-sub">Strategic 58h + meetings 15.5h, ex-tracker tasks</div>
+      </div>
+    </div>
+
+    <div class="artifacts-table">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Artifact</th>
+            <th>Effort</th>
+            <th>Expected Value</th>
+            <th>ROI Measurement</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="art-num">01</td>
+            <td class="art-name">Noya Clinics Proposal v4 <small>Commercial Proposal</small></td>
+            <td class="art-effort">16h</td>
+            <td class="art-value">
+              <span class="v-strong">SAR 1.9M – 2.65M</span> (Platform tier) <br/>
+              <span class="v-strong">SAR 600K – 900K</span> (Operational tier) <br/>
+              <span style="color:var(--ink-3); font-size:11px;">+ SAR 75K Phase 0 floor</span>
+            </td>
+            <td class="art-roi">
+              Win-rate × signed contract value ÷ 16h authoring effort. Yield target ≥ SAR 37K / hour at min-tier conversion.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">02</td>
+            <td class="art-name">Sawt AI Product Proposal <small>Commercial Proposal</small></td>
+            <td class="art-effort">5h</td>
+            <td class="art-value">
+              <span class="v-strat">Pipeline-stage advancement</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Scope-conditioned; commercial value pending tier confirmation</span>
+            </td>
+            <td class="art-roi">
+              Days-to-decision post-submission · stage progression in BD pipeline · scope-locked SAR upon counter.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">03</td>
+            <td class="art-name">Nexus Financial Model <small>Operating Model</small></td>
+            <td class="art-effort">10h</td>
+            <td class="art-value">
+              <span class="v-strat">Portfolio governance enablement</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Reusable QBR + investor-conversation reference</span>
+            </td>
+            <td class="art-roi">
+              QBR-cycle hours saved (vs ad-hoc reporting) · decision-velocity on portfolio interventions · model-reuse count.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">04</td>
+            <td class="art-name">Zaker LMS — Libyan PRD <small>Product Spec</small></td>
+            <td class="art-effort">12h</td>
+            <td class="art-value">
+              <span class="v-strat">Libya market-entry foundation</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Defines build cost &amp; time-to-MVP envelope</span>
+            </td>
+            <td class="art-roi">
+              Build-estimate accuracy on first sprint · time-to-MVP variance · stakeholder approval velocity.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">05</td>
+            <td class="art-name">MQ — B2B Company Profile <small>Commercial Asset</small></td>
+            <td class="art-effort">4h</td>
+            <td class="art-value">
+              <span class="v-strat">Enterprise outbound enablement</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Reusable across MQ enterprise pipeline</span>
+            </td>
+            <td class="art-roi">
+              Qualified-response rate from outbound · meetings booked / 100 sends · sales-cycle compression.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">06</td>
+            <td class="art-name">Optimized Incubator Value Proposition (EG / SA) <small>Strategic Asset</small></td>
+            <td class="art-effort">4h</td>
+            <td class="art-value">
+              <span class="v-strat">Foundation for Incubator commercial layer</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Underpins all 4 downstream Incubator assets</span>
+            </td>
+            <td class="art-roi">
+              Application volume · quality of applicants · price-anchor lift in conversion.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">07</td>
+            <td class="art-name">Incubation Program Content &amp; Syllabus <small>Program Asset</small></td>
+            <td class="art-effort">10h</td>
+            <td class="art-value">
+              <span class="v-strat">Cohort-delivery readiness</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Direct enabler of cohort revenue × per-startup ticket</span>
+            </td>
+            <td class="art-roi">
+              Cohort fill-rate · startup NPS · cohort completion rate · referral generation.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">08</td>
+            <td class="art-name">Social Media Campaign Calendar &amp; Content Plan <small>Marketing Asset</small></td>
+            <td class="art-effort">6h</td>
+            <td class="art-value">
+              <span class="v-strat">Brand activation framework</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Anchors all paid + organic spend across IG / LI / FB</span>
+            </td>
+            <td class="art-roi">
+              Reach · CPM · engagement rate · MQL volume · creative production hours saved.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">09</td>
+            <td class="art-name">ZDX Insights — Series 1 (4 articles) <small>Content Asset</small></td>
+            <td class="art-effort">4h</td>
+            <td class="art-value">
+              <span class="v-strat">Thought-leadership + SEO foundation</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Compounds over 6–12 months</span>
+            </td>
+            <td class="art-roi">
+              Organic traffic · backlink count · inbound lead origination · domain authority lift.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">10</td>
+            <td class="art-name">Employment Contract Template <small>HR Asset</small></td>
+            <td class="art-effort">3h</td>
+            <td class="art-value">
+              <span class="v-strat">Hiring-friction removal</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Used across May+ hiring round</span>
+            </td>
+            <td class="art-roi">
+              Time-to-offer reduction · legal-review hours saved per hire · template reuse count.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">11</td>
+            <td class="art-name">HR Policy Framework <small>HR Asset</small></td>
+            <td class="art-effort">5h</td>
+            <td class="art-value">
+              <span class="v-strat">People-ops baseline + risk reduction</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Foundation for studio scale-up</span>
+            </td>
+            <td class="art-roi">
+              Compliance posture (audit-readiness) · escalations avoided · onboarding time per hire.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">12</td>
+            <td class="art-name">Zaker MVP Document Update <small>Product Doc</small></td>
+            <td class="art-effort">1h</td>
+            <td class="art-value">
+              <span class="v-strat">Stakeholder-alignment artifact</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Closes-loop on Zaker stakeholder feedback</span>
+            </td>
+            <td class="art-roi">
+              Stakeholder approval cycle compression · re-work hours avoided next sprint.
+            </td>
+          </tr>
+          <tr>
+            <td class="art-num">13</td>
+            <td class="art-name">Creative Director Selection — Yousef Ayman <small>Talent Outcome</small></td>
+            <td class="art-effort">2h</td>
+            <td class="art-value">
+              <span class="v-strat">Studio creative leadership filled</span><br/>
+              <span style="color:var(--ink-3); font-size:11px;">Unblocks brand + Incubator marketing throughput</span>
+            </td>
+            <td class="art-roi">
+              Time-to-productivity (D+30 deliverable count) · brand asset throughput pre / post hire.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============== ANALYTICS ============== -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">§ 05</span>
+      <h2 class="section-title">Performance Analytics</h2>
+      <span class="section-meta">Quantitative Read</span>
+    </div>
+
+    <!-- Workload Composition: 135h breakdown -->
+    <div class="chart-card" style="margin-bottom: 16px;">
+      <h3 class="chart-title">Total Monthly Workload — 135h</h3>
+      <div class="chart-sub">Composition · ops tasks + strategic authoring + meetings</div>
+      <div class="workload-comp">
+        <div class="workload-segments">
+          <div class="workload-seg">
+            <div class="workload-seg-bar" style="background: linear-gradient(180deg, var(--orange) 0%, var(--orange-soft) 100%);"></div>
+            <div class="workload-seg-info">
+              <div class="workload-seg-name">Bi-Weekly Operational Tasks</div>
+              <div class="workload-seg-desc">23 tracker items · Apr 19 – 30</div>
+            </div>
+            <div class="workload-seg-num">
+              <div class="workload-seg-hours">61.5h</div>
+              <div class="workload-seg-pct">45.6% of total</div>
+            </div>
+          </div>
+          <div class="workload-seg">
+            <div class="workload-seg-bar" style="background: linear-gradient(180deg, var(--purple) 0%, var(--purple-soft) 100%);"></div>
+            <div class="workload-seg-info">
+              <div class="workload-seg-name">Strategic Deliverable Authoring</div>
+              <div class="workload-seg-desc">10 monthly items · proposals · models · PRDs · policies</div>
+            </div>
+            <div class="workload-seg-num">
+              <div class="workload-seg-hours">58h</div>
+              <div class="workload-seg-pct">43.0% of total</div>
+            </div>
+          </div>
+          <div class="workload-seg">
+            <div class="workload-seg-bar" style="background: linear-gradient(180deg, var(--orange) 0%, var(--purple) 100%);"></div>
+            <div class="workload-seg-info">
+              <div class="workload-seg-name">Client &amp; Stakeholder Meetings</div>
+              <div class="workload-seg-desc">Beyond captured tracker — alignment, screening, portfolio 1:1s</div>
+            </div>
+            <div class="workload-seg-num">
+              <div class="workload-seg-hours">15.5h</div>
+              <div class="workload-seg-pct">11.4% of total</div>
+            </div>
+          </div>
+        </div>
+        <!-- Donut for the 135h split -->
+        <svg viewBox="0 0 200 200" style="width: 100%; max-width: 280px; height: auto;">
+          <defs>
+            <linearGradient id="grad-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff6b1a" />
+              <stop offset="100%" stop-color="#ffb27c" />
+            </linearGradient>
+            <linearGradient id="grad-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#7c3aed" />
+              <stop offset="100%" stop-color="#c4b5fd" />
+            </linearGradient>
+            <linearGradient id="grad-mix" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff6b1a" />
+              <stop offset="100%" stop-color="#7c3aed" />
+            </linearGradient>
+          </defs>
+          <g transform="translate(100,100) rotate(-90)">
+            <!-- 61.5/135 = 45.6%, 58/135 = 43%, 15.5/135 = 11.4% -->
+            <!-- circumference = 2 * pi * 70 = 439.82 -->
+            <!-- 45.6% = 200.4, 43% = 189.1, 11.4% = 50.3 -->
+            <circle r="70" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="32" />
+            <circle r="70" fill="none" stroke="url(#grad-orange)" stroke-width="32"
+              stroke-dasharray="200.4 440" stroke-dashoffset="0" />
+            <circle r="70" fill="none" stroke="url(#grad-purple)" stroke-width="32"
+              stroke-dasharray="189.1 440" stroke-dashoffset="-200.4" />
+            <circle r="70" fill="none" stroke="url(#grad-mix)" stroke-width="32"
+              stroke-dasharray="50.3 440" stroke-dashoffset="-389.5" />
+          </g>
+          <text x="100" y="96" text-anchor="middle" font-family="Onest, sans-serif" font-size="40" font-weight="700" fill="#0a0a0c" letter-spacing="-2">135</text>
+          <text x="100" y="118" text-anchor="middle" font-family="Geist Mono, monospace" font-size="9" letter-spacing="2" fill="#6b6b73" font-weight="500">HOURS</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="analytics-grid">
+
+      <!-- DONUT: Status Distribution -->
+      <div class="chart-card">
+        <h3 class="chart-title">Operational Task Status</h3>
+        <div class="chart-sub">23 tasks · Apr 19 – 30</div>
+        <div class="donut-wrap">
+          <svg viewBox="0 0 200 200" style="width: 100%; height: auto;">
+            <!-- Done 10, Active 4, Pending 4, Blocked 5 -->
+            <!-- 10/23 = 43.48% = 191.2 of 440 -->
+            <!-- 4/23 = 17.39% = 76.5 -->
+            <!-- 4/23 = 17.39% = 76.5 -->
+            <!-- 5/23 = 21.74% = 95.6 -->
+            <g transform="translate(100,100) rotate(-90)">
+              <circle r="70" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="28" />
+              <circle r="70" fill="none" stroke="#14b870" stroke-width="28"
+                stroke-dasharray="191.2 440" stroke-dashoffset="0" />
+              <circle r="70" fill="none" stroke="#ff6b1a" stroke-width="28"
+                stroke-dasharray="76.5 440" stroke-dashoffset="-191.2" />
+              <circle r="70" fill="none" stroke="#f59e0b" stroke-width="28"
+                stroke-dasharray="76.5 440" stroke-dashoffset="-267.7" />
+              <circle r="70" fill="none" stroke="#ef4444" stroke-width="28"
+                stroke-dasharray="95.6 440" stroke-dashoffset="-344.2" />
+            </g>
+            <text x="100" y="96" text-anchor="middle" font-family="Onest, sans-serif" font-size="38" font-weight="700" fill="#0a0a0c" letter-spacing="-2">23</text>
+            <text x="100" y="118" text-anchor="middle" font-family="Geist Mono, monospace" font-size="9" letter-spacing="2" fill="#6b6b73" font-weight="500">TASKS</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="donut-legend-item">
+              <span class="legend-swatch" style="background: #14b870"></span>
+              <span class="legend-label">Done</span>
+              <span class="legend-count">10 tasks</span>
+              <span class="legend-pct">43.5%</span>
+            </div>
+            <div class="donut-legend-item">
+              <span class="legend-swatch" style="background: #ff6b1a"></span>
+              <span class="legend-label">Active</span>
+              <span class="legend-count">4 tasks</span>
+              <span class="legend-pct">17.4%</span>
+            </div>
+            <div class="donut-legend-item">
+              <span class="legend-swatch" style="background: #f59e0b"></span>
+              <span class="legend-label">Pending</span>
+              <span class="legend-count">4 tasks</span>
+              <span class="legend-pct">17.4%</span>
+            </div>
+            <div class="donut-legend-item">
+              <span class="legend-swatch" style="background: #ef4444"></span>
+              <span class="legend-label">Blocked</span>
+              <span class="legend-count">5 tasks</span>
+              <span class="legend-pct">21.7%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HBAR: Hours by Activity -->
+      <div class="chart-card">
+        <h3 class="chart-title">Workload by Activity</h3>
+        <div class="chart-sub">Bi-weekly tracker · 61.5h slice</div>
+        <div class="hbar-row"><div class="hbar-label">Website</div><div class="hbar-track"><div class="hbar-fill f-orange" style="width: 100%;"></div></div><div class="hbar-value">16h</div></div>
+        <div class="hbar-row"><div class="hbar-label">Core Offering</div><div class="hbar-track"><div class="hbar-fill f-orange" style="width: 87.5%;"></div></div><div class="hbar-value">14h</div></div>
+        <div class="hbar-row"><div class="hbar-label">Marketing</div><div class="hbar-track"><div class="hbar-fill f-orange" style="width: 62.5%;"></div></div><div class="hbar-value">10h</div></div>
+        <div class="hbar-row"><div class="hbar-label">Media</div><div class="hbar-track"><div class="hbar-fill f-orange" style="width: 43.8%;"></div></div><div class="hbar-value">7h</div></div>
+        <div class="hbar-row"><div class="hbar-label">Nexus</div><div class="hbar-track"><div class="hbar-fill f-purple" style="width: 37.5%;"></div></div><div class="hbar-value">6h</div></div>
+        <div class="hbar-row"><div class="hbar-label">Business</div><div class="hbar-track"><div class="hbar-fill f-orange" style="width: 25%;"></div></div><div class="hbar-value">4h</div></div>
+        <div class="hbar-row"><div class="hbar-label">Recruitment</div><div class="hbar-track"><div class="hbar-fill f-orange" style="width: 18.8%;"></div></div><div class="hbar-value">3h</div></div>
+        <div class="hbar-row"><div class="hbar-label">Zaker</div><div class="hbar-track"><div class="hbar-fill f-purple" style="width: 15.6%;"></div></div><div class="hbar-value">2.5h</div></div>
+        <div class="hbar-row"><div class="hbar-label">Infrastructure</div><div class="hbar-track"><div class="hbar-fill f-orange" style="width: 12.5%;"></div></div><div class="hbar-value">2h</div></div>
+        <div class="hbar-row"><div class="hbar-label">Sawt AI</div><div class="hbar-track"><div class="hbar-fill f-purple" style="width: 12.5%;"></div></div><div class="hbar-value">2h</div></div>
+      </div>
+
+      <!-- STACKED: Status by workstream -->
+      <div class="chart-card full">
+        <h3 class="chart-title">Throughput by Workstream</h3>
+        <div class="chart-sub">Status composition across the three tracks</div>
+        <!-- Incubation: Done 5, Active 4, Pending 3, Blocked 4 = 16 -->
+        <div class="stacked-row">
+          <div class="stacked-label">Incubation Program</div>
+          <div class="stacked-bar">
+            <div class="stacked-seg seg-done" style="width: 31.25%">5</div>
+            <div class="stacked-seg seg-active" style="width: 25%">4</div>
+            <div class="stacked-seg seg-pending" style="width: 18.75%">3</div>
+            <div class="stacked-seg seg-blocked" style="width: 25%">4</div>
+          </div>
+        </div>
+        <!-- ZDX General: Done 5, Pending 1, Blocked 1 = 7 -->
+        <div class="stacked-row">
+          <div class="stacked-label">ZDX General</div>
+          <div class="stacked-bar">
+            <div class="stacked-seg seg-done" style="width: 71.43%">5</div>
+            <div class="stacked-seg seg-pending" style="width: 14.29%">1</div>
+            <div class="stacked-seg seg-blocked" style="width: 14.29%">1</div>
+          </div>
+        </div>
+        <!-- Strategic Monthly: Done 9, Active 1 -->
+        <div class="stacked-row">
+          <div class="stacked-label">Strategic (Monthly)</div>
+          <div class="stacked-bar">
+            <div class="stacked-seg seg-done" style="width: 90%">9</div>
+            <div class="stacked-seg seg-active" style="width: 10%">1</div>
+          </div>
+        </div>
+        <div class="legend-row">
+          <span><i style="background: var(--st-done);"></i> Done</span>
+          <span><i style="background: var(--st-active);"></i> Active</span>
+          <span><i style="background: var(--st-pending);"></i> Pending</span>
+          <span><i style="background: var(--st-blocked);"></i> Blocked</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============== POSTMORTEM ============== -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">§ 06</span>
+      <h2 class="section-title">Postmortem &amp; Recommendations</h2>
+      <span class="section-meta">Reflective Read</span>
+    </div>
+
+    <div class="pm-grid">
+
+      <div class="pm-block went-well">
+        <div class="pm-title">
+          <span class="pm-icon i-good">✓</span>
+          What Went Well
+        </div>
+        <div class="pm-sub">Strengths to preserve into May</div>
+        <ol class="pm-list">
+          <li><span><b>Strategic delivery rate of 90%</b> — 9 of 10 monthly outputs landed inside the cycle, including two top-of-funnel commercial proposals (Noya, Sawt AI).</span></li>
+          <li><span><b>Documentation discipline held under load</b> — proposals, PRDs, financial models, and policies all delivered to a publishable standard, not draft quality.</span></li>
+          <li><span><b>Incubator stack moved end-to-end</b> from value-prop to syllabus to social calendar to insights series — the studio's flagship offering is now externally launchable.</span></li>
+          <li><span><b>HR foundation set ahead of team scale</b> — contract + policy + Creative Director hire close in the same month, ahead of the May ramp.</span></li>
+          <li><span><b>Stakeholder cadence kept tight</b> — Zaker, Nexus, and portfolio meetings held without slip; alignment loops compressed the document-revision count on Zaker MVP.</span></li>
+        </ol>
+      </div>
+
+      <div class="pm-block friction">
+        <div class="pm-title">
+          <span class="pm-icon i-bad">!</span>
+          Where Friction Lived
+        </div>
+        <div class="pm-sub">Drag points that suppressed output</div>
+        <ol class="pm-list">
+          <li><span><b>External dependency drag</b> — <span class="accent-o">AWS Payment Gateway</span> activation alone gates four downstream tasks (Booking Form UAT, Application Form, Interview Bookings, indirectly the social activation). This is the single biggest leak.</span></li>
+          <li><span><b>Founder review queue is a serial bottleneck</b> — ZDX Website launch is held on review, which holds Social Activation, which holds the Insights launch sequence. Critical-priority items lack an SLA.</span></li>
+          <li><span><b>Third-party integration risk on Noya</b> — Microchips ME WhatsApp API readiness is gating final delivery to Karim / Waheed; integration partner is technically immature per prior assessment.</span></li>
+          <li><span><b>Strategic-hour logging is retroactive</b> — the 58h authoring + 15.5h meetings figures are reconstructed, not tracked at the time. Erodes trust in performance numbers month-on-month.</span></li>
+          <li><span><b>Recruitment pipeline thin on adjacent roles</b> — GEO Specialist and Conversational Marketing roles still in early sourcing; risk of slipping the hire into late May.</span></li>
+        </ol>
+      </div>
+
+      <div class="pm-block recs" style="grid-column: 1 / -1;">
+        <div class="pm-title">
+          <span class="pm-icon i-rec">→</span>
+          Recommendations
+        </div>
+        <div class="pm-sub">Concrete moves for the next cycle</div>
+        <ol class="pm-list">
+          <li><span><b>Stand up an external-dependency tracker</b> with named SLA owners and a weekly review. Each blocker gets a "next-action-by-date" field. <span class="accent-o">Removes the silent-slip pattern</span>.</span></li>
+          <li><span><b>Dual-provider redundancy for AWS payment</b> — pre-qualify a backup gateway (Tap, HyperPay, or Stripe-via-aggregator) so that AWS approval friction stops being a single point of failure.</span></li>
+          <li><span><b>Founder review SLA</b> for Critical-priority items: 48-hour turnaround, with an explicit "skip-day" tag if review can't happen. Restores predictability to the launch sequence.</span></li>
+          <li><span><b>Move strategic-hour logging from retroactive to in-the-moment</b> — Toggl / Clockify on the strategic deliverables. Required for honest QBR reads going forward.</span></li>
+          <li><span><b>Hire-by-date discipline on open roles</b> — set a May 25 close-date for GEO and Conversational Marketing, with go / no-go on each candidate's progression milestone.</span></li>
+          <li><span><b>Win/loss postmortem on every closed proposal</b> (Noya, Sawt AI, MQ) — codify what worked, feed the BD playbook. Makes April's authoring effort compound.</span></li>
+          <li><span><b>Lock the monthly review format</b> — keep this document as the standing template; submission day = first business day of the month. <span class="accent-p">Eliminates the rebuild cost</span> of producing the report fresh each cycle.</span></li>
+        </ol>
+      </div>
+
+      <div class="pm-block conclusion" style="grid-column: 1 / -1;">
+        <div class="pm-title">
+          <span class="pm-icon i-end">§</span>
+          Conclusion
+        </div>
+        <div class="pm-sub">Closing read on the cycle</div>
+        <div class="conclusion-prose">
+          <p>
+            April was a <strong>delivery-heavy month with strong strategic output and high consistency in document quality</strong>. The studio infrastructure that's been deferred for cycles — HR baseline, Incubator content stack, brand activation framework — is now in place. That matters: May is structurally a sales-led month, and the ramp depends on these foundations being settled rather than negotiated mid-cycle.
+          </p>
+          <p>
+            The headline performance metric is the <strong>9-of-10 strategic-deliverable hit rate</strong> against a backdrop of <strong>135 tracked hours</strong> distributed across authoring, operations, and meetings. The single non-Done strategic item is the talent build, which is structurally a multi-month effort and is on-track. Nothing in the strategic queue regressed.
+          </p>
+          <div class="conclusion-quote">
+            The risk going forward is not output velocity — it's external-blocker accumulation. Addressing the dependency-management gap is the highest-leverage move for May.
+          </div>
+          <p>
+            On the operational tracker, the 43% done / 22% blocked split reads worse than the underlying execution. <strong>Four of the five blocked items trace to a single external root cause</strong> (AWS payment gateway activation). With that resolved, the trailing-edge throughput materially improves overnight. The recommendation set above is sequenced to address that first — every other improvement compounds on it.
+          </p>
+          <p>
+            Net read: <strong>healthy delivery month with a clear, named, addressable bottleneck</strong>. Recommend approving the May priorities as drafted and unblocking AWS as the first item on the founder-review queue this week.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============== FOOTER ============== -->
+  <footer>
+    <div>ZDX · Performance Review · April 2026</div>
+    <div class="mark">Prepared by <span class="gradient">Omar Shalata</span></div>
+    <div>Confidential · Internal</div>
+  </footer>
+
+</main>
+</body>
+</html>
