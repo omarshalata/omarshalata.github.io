@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MacQueen vs Almosafer — Competitive Technical Report · ZDX</title>
+<meta name="description" content="A technical and product teardown comparing MacQueen (A) against Almosafer (B) across reliability, features, performance, user experience and technical execution — with a disruption architecture for MacQueen." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --white:#ffffff; --bg:#fafafb; --ink:#0a0a0c; --ink-2:#1f1f24; --ink-3:#6b6b73; --ink-4:#a3a3ab; --ink-5:#d4d4d8;
+  --orange:#ff6b1a; --orange-deep:#e85d12; --orange-soft:#ffb27c; --orange-glass:rgba(255,107,26,0.10); --orange-glass-2:rgba(255,107,26,0.18);
+  --purple:#7c3aed; --purple-deep:#6d28d9; --purple-soft:#c4b5fd; --purple-glass:rgba(124,58,237,0.10); --purple-glass-2:rgba(124,58,237,0.18);
+  --teal:#0a9396; --teal-glass:rgba(10,147,150,0.10);
+  --st-done:#14b870; --st-active:#ff6b1a; --st-pending:#f59e0b; --st-blocked:#ef4444;
+  --st-done-bg:rgba(20,184,112,0.10); --st-active-bg:rgba(255,107,26,0.10); --st-pending-bg:rgba(245,158,11,0.10); --st-blocked-bg:rgba(239,68,68,0.10);
+  --glass:rgba(255,255,255,0.62); --glass-strong:rgba(255,255,255,0.86); --glass-soft:rgba(255,255,255,0.45); --glass-border:rgba(255,255,255,0.85);
+  --line:rgba(10,10,12,0.06); --line-2:rgba(10,10,12,0.10); --line-3:rgba(10,10,12,0.16);
+  --shadow-xs:0 1px 2px rgba(10,10,12,0.04);
+  --shadow-sm:0 2px 8px rgba(10,10,12,0.04),0 1px 2px rgba(10,10,12,0.04);
+  --shadow-md:0 8px 24px rgba(10,10,12,0.06),0 2px 4px rgba(10,10,12,0.04);
+  --shadow-lg:0 24px 64px rgba(10,10,12,0.08),0 8px 16px rgba(10,10,12,0.04);
+  --r-sm:8px; --r-md:14px; --r-lg:22px; --r-xl:28px; --r-2xl:36px;
+  --font:'Onest',-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+  --mono:'Geist Mono','SF Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --white:#141418; --bg:#0a0a0c; --ink:#f4f4f6; --ink-2:#e2e2e7; --ink-3:#9a9aa4; --ink-4:#6b6b73; --ink-5:#3a3a42;
+    --glass:rgba(28,28,34,0.62); --glass-strong:rgba(28,28,34,0.88); --glass-soft:rgba(28,28,34,0.45); --glass-border:rgba(255,255,255,0.09);
+    --line:rgba(255,255,255,0.07); --line-2:rgba(255,255,255,0.12); --line-3:rgba(255,255,255,0.20);
+    --shadow-sm:0 2px 8px rgba(0,0,0,0.32); --shadow-md:0 8px 24px rgba(0,0,0,0.36); --shadow-lg:0 24px 64px rgba(0,0,0,0.44);
+  }
+}
+:root[data-theme="dark"]{
+  --white:#141418; --bg:#0a0a0c; --ink:#f4f4f6; --ink-2:#e2e2e7; --ink-3:#9a9aa4; --ink-4:#6b6b73; --ink-5:#3a3a42;
+  --glass:rgba(28,28,34,0.62); --glass-strong:rgba(28,28,34,0.88); --glass-soft:rgba(28,28,34,0.45); --glass-border:rgba(255,255,255,0.09);
+  --line:rgba(255,255,255,0.07); --line-2:rgba(255,255,255,0.12); --line-3:rgba(255,255,255,0.20);
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.32); --shadow-md:0 8px 24px rgba(0,0,0,0.36); --shadow-lg:0 24px 64px rgba(0,0,0,0.44);
+}
+:root[data-theme="light"]{
+  --white:#ffffff; --bg:#fafafb; --ink:#0a0a0c; --ink-2:#1f1f24; --ink-3:#6b6b73; --ink-4:#a3a3ab; --ink-5:#d4d4d8;
+  --glass:rgba(255,255,255,0.62); --glass-strong:rgba(255,255,255,0.86); --glass-soft:rgba(255,255,255,0.45); --glass-border:rgba(255,255,255,0.85);
+  --line:rgba(10,10,12,0.06); --line-2:rgba(10,10,12,0.10); --line-3:rgba(10,10,12,0.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.6;letter-spacing:-0.005em;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+body::before,body::after{content:'';position:fixed;width:720px;height:720px;border-radius:50%;filter:blur(140px);z-index:0;pointer-events:none;opacity:.5}
+body::before{background:var(--orange-glass-2);top:-280px;right:-240px}
+body::after{background:var(--purple-glass-2);bottom:-320px;left:-260px}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 28px 120px}
+a{color:inherit}
+/* ---------- MASTHEAD ---------- */
+.mast{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:26px 0 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--orange),var(--purple));display:grid;place-items:center;color:#fff;font-weight:800;font-size:15px;box-shadow:0 8px 22px rgba(255,107,26,.28)}
+.brand b{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.brand span{font-size:11px;color:var(--ink-3);display:block;font-weight:400;letter-spacing:.02em}
+.tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--ink-3);border:1px solid var(--line-2);padding:6px 12px;border-radius:999px;background:var(--glass-soft)}
+/* ---------- HERO ---------- */
+.hero{padding:56px 0 40px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);margin-bottom:20px;font-weight:600}
+h1{font-size:clamp(38px,7vw,72px);line-height:1.02;letter-spacing:-.045em;font-weight:800;margin-bottom:22px}
+h1 em{font-style:normal;background:linear-gradient(100deg,var(--orange),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.lede{font-size:16.5px;color:var(--ink-3);max-width:80ch;line-height:1.72}
+.metagrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;background:var(--line-2);border:1px solid var(--line-2);border-radius:var(--r-md);overflow:hidden;margin-top:36px}
+.metagrid div{background:var(--white);padding:15px 17px}
+.metagrid dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-4);margin-bottom:6px}
+.metagrid dd{font-size:13.5px;font-weight:600;letter-spacing:-.01em}
+/* ---------- SECTION ---------- */
+section{padding:64px 0 0;scroll-margin-top:20px}
+.snum{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--purple);font-weight:600;margin-bottom:12px;text-transform:uppercase}
+h2{font-size:clamp(26px,3.6vw,38px);letter-spacing:-.035em;font-weight:750;line-height:1.12;margin-bottom:14px}
+h3{font-size:18px;font-weight:700;letter-spacing:-.022em;margin:38px 0 12px}
+h4{font-size:14.5px;font-weight:700;letter-spacing:-.015em;margin:22px 0 8px}
+.sub{color:var(--ink-3);font-size:15px;max-width:82ch;margin-bottom:26px;line-height:1.72}
+p{margin-bottom:13px;color:var(--ink-2);max-width:88ch}
+ul,ol{margin:0 0 15px 20px;color:var(--ink-2);max-width:88ch}
+li{margin-bottom:7px}
+li::marker{color:var(--orange)}
+strong{font-weight:650;color:var(--ink)}
+code{font-family:var(--mono);font-size:.87em;background:var(--purple-glass);color:var(--purple-deep);padding:2px 6px;border-radius:5px;border:1px solid var(--line-2)}
+@media (prefers-color-scheme:dark){code{color:var(--purple-soft)}}
+:root[data-theme="dark"] code{color:var(--purple-soft)}
+/* ---------- CARDS ---------- */
+.card{background:var(--glass-strong);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:26px 28px;box-shadow:var(--shadow-md);margin-bottom:18px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:14px}
+/* KPI */
+.kpi{background:var(--glass-strong);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:var(--r-md);padding:20px;box-shadow:var(--shadow-sm)}
+.kpi .k{font-size:30px;font-weight:800;letter-spacing:-.04em;line-height:1;margin-bottom:7px}
+.kpi .l{font-size:12.5px;font-weight:650;margin-bottom:5px}
+.kpi .d{font-size:11.5px;color:var(--ink-3);line-height:1.5}
+.k-o{color:var(--orange)} .k-p{color:var(--purple)} .k-r{color:var(--st-blocked)} .k-g{color:var(--st-done)} .k-a{color:var(--st-pending)}
+/* PILL */
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:700;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.p-a{background:var(--orange-glass);color:var(--orange-deep);border:1px solid var(--orange-glass-2)}
+.p-b{background:var(--purple-glass);color:var(--purple-deep);border:1px solid var(--purple-glass-2)}
+.p-crit{background:var(--st-blocked-bg);color:var(--st-blocked);border:1px solid rgba(239,68,68,.22)}
+.p-warn{background:var(--st-pending-bg);color:#b45309;border:1px solid rgba(245,158,11,.24)}
+.p-ok{background:var(--st-done-bg);color:#0f8a54;border:1px solid rgba(20,184,112,.22)}
+.p-inf{background:var(--teal-glass);color:var(--teal);border:1px solid rgba(10,147,150,.22)}
+@media (prefers-color-scheme:dark){.p-a{color:var(--orange-soft)}.p-b{color:var(--purple-soft)}.p-warn{color:#fbbf24}.p-ok{color:#34d399}}
+:root[data-theme="dark"] .p-a{color:var(--orange-soft)}
+:root[data-theme="dark"] .p-b{color:var(--purple-soft)}
+:root[data-theme="dark"] .p-warn{color:#fbbf24}
+:root[data-theme="dark"] .p-ok{color:#34d399}
+/* TABLE */
+.tw{overflow-x:auto;border:1px solid var(--line-2);border-radius:var(--r-md);background:var(--white);margin-bottom:18px;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:660px;font-size:13px}
+th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);font-weight:600;padding:13px 15px;border-bottom:1px solid var(--line-2);background:var(--glass-soft);white-space:nowrap;vertical-align:bottom}
+td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);line-height:1.55}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--glass-soft)}
+td.n{font-family:var(--mono);font-size:12px;white-space:nowrap}
+td.f{font-weight:650;color:var(--ink)}
+/* SCOREBAR */
+.sb{display:flex;align-items:center;gap:9px;min-width:150px}
+.sb-t{flex:1;height:6px;border-radius:999px;background:var(--line-2);overflow:hidden;min-width:64px}
+.sb-f{height:100%;border-radius:999px}
+.sb-a{background:linear-gradient(90deg,var(--orange-soft),var(--orange))}
+.sb-b{background:linear-gradient(90deg,var(--purple-soft),var(--purple))}
+.sb-v{font-family:var(--mono);font-size:11.5px;font-weight:600;min-width:30px;text-align:right}
+/* CALLOUT */
+.co{border-left:3px solid var(--orange);background:var(--orange-glass);border-radius:0 var(--r-md) var(--r-md) 0;padding:17px 21px;margin:20px 0}
+.co.pur{border-left-color:var(--purple);background:var(--purple-glass)}
+.co.red{border-left-color:var(--st-blocked);background:var(--st-blocked-bg)}
+.co.grn{border-left-color:var(--st-done);background:var(--st-done-bg)}
+.co.amb{border-left-color:var(--st-pending);background:var(--st-pending-bg)}
+.co .t{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;margin-bottom:8px;color:var(--ink-2)}
+.co p:last-child{margin-bottom:0}
+/* VERSUS HEADER */
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch;margin-bottom:24px}
+.vs-c{border-radius:var(--r-lg);padding:24px;border:1px solid var(--glass-border);box-shadow:var(--shadow-md);background:var(--glass-strong)}
+.vs-c.a{border-top:3px solid var(--orange)}
+.vs-c.b{border-top:3px solid var(--purple)}
+.vs-mid{display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink-4);letter-spacing:.1em}
+.vs-c h4{margin:10px 0 4px;font-size:20px;letter-spacing:-.03em}
+.vs-c .role{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.vs-c .desc{font-size:12.5px;color:var(--ink-3);margin-top:10px;line-height:1.6}
+.vs-stat{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12px}
+.vs-stat span:first-child{color:var(--ink-3)}
+.vs-stat span:last-child{font-family:var(--mono);font-weight:600;text-align:right}
+@media(max-width:820px){.vs{grid-template-columns:1fr}.vs-mid{padding:6px 0}}
+/* TIMELINE */
+.tl{border-left:2px solid var(--line-2);margin-left:9px;padding-left:24px}
+.tl-i{position:relative;padding-bottom:26px}
+.tl-i::before{content:'';position:absolute;left:-31px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--orange);border:2.5px solid var(--bg);box-shadow:0 0 0 1.5px var(--orange)}
+.tl-i.b::before{background:var(--purple);box-shadow:0 0 0 1.5px var(--purple)}
+.tl-i.g::before{background:var(--st-done);box-shadow:0 0 0 1.5px var(--st-done)}
+.tl-i.r::before{background:var(--st-blocked);box-shadow:0 0 0 1.5px var(--st-blocked)}
+.tl-d{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.tl-t{font-weight:700;font-size:14.5px;margin-bottom:5px;letter-spacing:-.015em}
+.tl-b{font-size:13px;color:var(--ink-3);line-height:1.62;max-width:78ch}
+/* GAP BAR */
+.gapbar{display:flex;height:38px;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--line-2);font-family:var(--mono);font-size:11px;font-weight:700;margin:10px 0 6px}
+.gapbar div{display:grid;place-items:center;color:#fff;white-space:nowrap;overflow:hidden}
+/* HORIZON */
+.hz{border:1px solid var(--line-2);border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px;background:var(--white)}
+.hz-h{padding:15px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line-2)}
+.hz-h.h0{background:linear-gradient(90deg,var(--st-blocked-bg),transparent)}
+.hz-h.h1{background:linear-gradient(90deg,var(--orange-glass),transparent)}
+.hz-h.h2{background:linear-gradient(90deg,var(--purple-glass),transparent)}
+.hz-h.h3{background:linear-gradient(90deg,var(--st-done-bg),transparent)}
+.hz-h .ttl{font-weight:750;font-size:15.5px;letter-spacing:-.02em}
+.hz-h .per{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
+.hz-b{padding:20px 22px}
+/* FOOT */
+footer{margin-top:80px;padding-top:30px;border-top:1px solid var(--line-2);font-size:12px;color:var(--ink-3)}
+.srcs{columns:2;column-gap:34px;font-size:11.5px;line-height:1.75}
+.srcs a{color:var(--ink-3);text-decoration:none;border-bottom:1px solid var(--line-2)}
+.srcs a:hover{color:var(--orange)}
+.srcs li{margin-bottom:6px;break-inside:avoid}
+@media(max-width:700px){.srcs{columns:1}}
+/* NAV */
+.toc{position:sticky;top:0;z-index:20;background:var(--glass-strong);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--line-2);margin:0 -28px 0;padding:11px 28px;display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.toc::-webkit-scrollbar{display:none}
+.toc a{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-decoration:none;padding:6px 11px;border-radius:999px;white-space:nowrap;transition:.15s}
+.toc a:hover{background:var(--orange-glass);color:var(--orange-deep)}
+@media print{
+  body::before,body::after{display:none}
+  .toc{display:none}
+  .card,.kpi,.hz{box-shadow:none;border:1px solid #ddd;break-inside:avoid}
+  section{padding-top:28px;break-inside:avoid-page}
+}
+@media(max-width:640px){
+  .wrap{padding:0 16px 80px}
+  .toc{margin:0 -16px 0;padding:10px 16px}
+  h1{font-size:34px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="mast">
+  <div class="brand">
+    <div class="logo">Z</div>
+    <div><b>ZDX</b><span>Venture Architecture · Competitive Intelligence</span></div>
+  </div>
+  <div class="tag">Internal · Confidential</div>
+</div>
+
+<div class="hero">
+  <div class="eyebrow">Competitive Technical Report · Saudi Traveltech</div>
+  <h1>MacQueen vs<br />Almosafer.<br /><em>The disruption path.</em></h1>
+  <p class="lede">
+    A structured teardown of two Saudi online-booking products across five axes — <strong>reliability, features, performance, user experience and technical execution</strong> — followed by an engineering and product architecture designed to move MacQueen from a stalled hotel-only OTA to a defensible challenger. The finding in one line: MacQueen cannot win the fight it is currently picking, and the fight it can win is one Almosafer is structurally poor at.
+  </p>
+  <dl class="metagrid">
+    <div><dt>Product A</dt><dd>MacQueen (macqueen.co)</dd></div>
+    <div><dt>Product B</dt><dd>Almosafer (Seera Group)</dd></div>
+    <div><dt>Report Date</dt><dd>27 July 2026</dd></div>
+    <div><dt>Surfaces Assessed</dt><dd>Web + iOS + Android</dd></div>
+    <div><dt>Prepared By</dt><dd>Omar Shalata</dd></div>
+    <div><dt>Classification</dt><dd>Strategy · Engineering</dd></div>
+  </dl>
+</div>
+
+<nav class="toc">
+  <a href="#s1">01 Verdict</a>
+  <a href="#s2">02 Method</a>
+  <a href="#s3">03 Market</a>
+  <a href="#s4">04 Scorecard</a>
+  <a href="#s5">05 Reliability</a>
+  <a href="#s6">06 Features</a>
+  <a href="#s7">07 Performance</a>
+  <a href="#s8">08 UX</a>
+  <a href="#s9">09 Tech Execution</a>
+  <a href="#s10">10 The Wedge</a>
+  <a href="#s11">11 Strategy</a>
+  <a href="#s12">12 Architecture</a>
+  <a href="#s13">13 Roadmap</a>
+  <a href="#s14">14 Scoreboard</a>
+  <a href="#s15">15 Risks</a>
+  <a href="#s16">16 Sources</a>
+</nav>
+
+<!-- ============ 01 ============ -->
+<section id="s1">
+  <div class="snum">§ 01 — Executive Verdict</div>
+  <h2>MacQueen is not losing on price. It is losing on shipping.</h2>
+  <p class="sub">Almosafer is not beating MacQueen because it is cheaper or because it has more hotels — on the headline supply number the two products claim the <em>same</em> inventory. Almosafer is winning because it operates a multi-vertical, multi-surface, continuously-released platform, and MacQueen operates a single-vertical app that has not shipped a public release in roughly fourteen months.</p>
+
+  <div class="vs">
+    <div class="vs-c a">
+      <span class="pill p-a">Product A · Challenger</span>
+      <h4>MacQueen</h4>
+      <div class="role">Hotel-only OTA · Jeddah, KSA</div>
+      <div class="desc">Hotel booking across a claimed 1.5M+ properties, "best rates" positioning, wallet/travel-credit loyalty. Built in partnership with Zeidex. Investor-facing narrative still anchored on a fintech/blockchain thesis.</div>
+      <div class="vs-stat"><span>iOS rating</span><span>4.6 ★ · ~3.6K ratings</span></div>
+      <div class="vs-stat"><span>Last iOS release</span><span>22.23.8 · 27 May 2025</span></div>
+      <div class="vs-stat"><span>Last Android release</span><span>6.5.0 · 12 Jun 2025</span></div>
+      <div class="vs-stat"><span>Verticals</span><span>1 (hotels)</span></div>
+      <div class="vs-stat"><span>Weighted score</span><span style="color:var(--orange)">3.1 / 10</span></div>
+    </div>
+    <div class="vs-mid">VS</div>
+    <div class="vs-c b">
+      <span class="pill p-b">Product B · Incumbent</span>
+      <h4>Almosafer</h4>
+      <div class="role">Full-stack OTA · Seera Group (TADAWUL:1810)</div>
+      <div class="desc">Flights, hotels, packages, activities, transfers, car rental, eSIM. Four business lines: Consumer, Almosafer Business, Discover Saudi, Mawasim (Hajj &amp; Umrah). ~$1.5B consumer GBV.</div>
+      <div class="vs-stat"><span>iOS rating</span><span>4.7 ★ · ~276.9K ratings</span></div>
+      <div class="vs-stat"><span>App version line</span><span>8.4x · active cadence</span></div>
+      <div class="vs-stat"><span>New surface</span><span>ChatGPT app · 8 Apr 2026</span></div>
+      <div class="vs-stat"><span>Verticals</span><span>7+ · 4 business lines</span></div>
+      <div class="vs-stat"><span>Weighted score</span><span style="color:var(--purple)">7.4 / 10</span></div>
+    </div>
+  </div>
+
+  <div class="grid4">
+    <div class="kpi"><div class="k k-r">~14 mo</div><div class="l">MacQueen release drought</div><div class="d">No public store release on either platform since May/June 2025, while the category leader shipped an agentic-commerce surface.</div></div>
+    <div class="kpi"><div class="k k-p">~77×</div><div class="l">Rating-volume gap</div><div class="d">276.9K iOS ratings vs ~3.6K. A proxy for the transacting-user gap, not just sentiment.</div></div>
+    <div class="kpi"><div class="k k-o">0</div><div class="l">Supply advantage</div><div class="d">Both products publicly claim 1.5M+ properties. The "best rates" claim has no structural basis.</div></div>
+    <div class="kpi"><div class="k k-g">SAR 82.7B</div><div class="l">KSA tourism spend</div><div class="d">37.2M visitors, +8%. Domestic trips +16% to 28.9M — 78% of all visits. The prize is real and growing.</div></div>
+  </div>
+
+  <div class="co red">
+    <div class="t">⚠ The core strategic error</div>
+    <p>MacQueen's public positioning is <strong>"the same inventory, cheaper."</strong> That is the one position it cannot defend. Rate advantage in hotel distribution is a function of contracting leverage and volume — Almosafer transacts roughly $1.5B in gross bookings and negotiates direct. A challenger reselling the same wholesale bedbank supply cannot be structurally cheaper; it can only be cheaper by burning margin, which is not a strategy. Every user review complaining that MacQueen's prices are <em>higher</em> than alternatives is the market pricing this in.</p>
+  </div>
+
+  <div class="co grn">
+    <div class="t">✔ The defensible counter-position</div>
+    <p>Almosafer's weakest surface is not search, price or supply — it is <strong>post-booking servicing</strong>. The dominant complaint pattern across independent review corpora is refunds that do not resolve, bookings not honoured on arrival, and support that does not respond. That is an operations and systems failure, and it is exactly the kind of failure a smaller, better-engineered player can beat: it requires correctness and automation, not capital. Combine that with a <strong>religious-travel hotel specialisation</strong> — Makkah/Madinah, where MacQueen is geographically native and the volume is enormous and growing — and MacQueen has a wedge that Almosafer's scale actively works against.</p>
+  </div>
+</section>
+
+<!-- ============ 02 ============ -->
+<section id="s2">
+  <div class="snum">§ 02 — Method &amp; Evidence Base</div>
+  <h2>What this report is built on, and what it is not.</h2>
+  <p class="sub">Stating the evidence boundary up front, because several conclusions below are strong and the reader should be able to weight them correctly.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h4 style="margin-top:0">Evidence actually used</h4>
+      <ul>
+        <li>Public app-store metadata: version strings, release dates, rating counts, binary size, install velocity.</li>
+        <li>Independent review aggregators and app-analytics mirrors (AppBrain, JustUseApp, Trustpilot, Uptodown/APKMirror version histories).</li>
+        <li>Company and investor-facing published claims (macqueen.co, invest.macqueen.co, corporate.almosafer.com).</li>
+        <li>Trade press and financial disclosure: PhocusWire, Skift, Zawya, Argaam/Tadawul filings, AGBI.</li>
+        <li>Market sizing and tourism statistics: Ken Research, IMARC, WiT, Knight Frank, Saudi tourism disclosures.</li>
+        <li>Domain reference architecture for hotel distribution, NDC, bedbank aggregation and KSA payment rails.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 style="margin-top:0">Explicit limitations</h4>
+      <ul>
+        <li><strong>No first-party instrumentation.</strong> Direct HTTP access to <code>macqueen.co</code> and <code>almosafer.com</code> was blocked by this environment's egress policy (403 on CONNECT). No live Lighthouse run, no waterfall capture, no bundle analysis was performed.</li>
+        <li>Performance and architecture findings are therefore <strong>inferred</strong> from observable proxies (binary size, version divergence, reported responsiveness, feature surface) and are marked as inference where they appear.</li>
+        <li>Rating figures differ by storefront. MacQueen shows ~4.6★/3.6K on the Saudi storefront and ~4.64★/220 on Western mirrors; the Saudi figure is treated as primary.</li>
+        <li>One third-party "safety score" of 0/100 for Almosafer is an NLP sentiment heuristic, <strong>not</strong> a security assessment, and is used only as directional evidence of servicing complaints.</li>
+        <li>A widely-syndicated "$27.7M revenue" figure for Almosafer conflicts with its ~$1.5B GBV and is disregarded as a scraped-profile artifact.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p><strong>Confidence marking used throughout:</strong> <span class="pill p-ok">Observed</span> = directly evidenced in a public source. <span class="pill p-inf">Inferred</span> = reasoned from proxies, stated as such. <span class="pill p-warn">Assumed</span> = working assumption requiring validation before it drives spend.</p>
+</section>
+
+<!-- ============ 03 ============ -->
+<section id="s3">
+  <div class="snum">§ 03 — Market Context</div>
+  <h2>The pool is growing faster than either product is improving.</h2>
+  <p class="sub">Saudi online travel is one of the few markets globally where structural demand growth, government policy and payments modernisation are all pushing in the same direction at once. This matters because it means a challenger does not need to take share from the incumbent to grow — but it also means the incumbent's failure to serve new demand well is a real opening.</p>
+
+  <div class="grid4">
+    <div class="kpi"><div class="k k-p">$5.3B → $12.3B</div><div class="l">KSA online travel market</div><div class="d">2024 → 2033, ~9.9% CAGR.</div></div>
+    <div class="kpi"><div class="k k-o">$2.3B</div><div class="l">OTA hotel GBV</div><div class="d">vs $1.9B OTA air GBV. Hotels are the larger online pool.</div></div>
+    <div class="kpi"><div class="k k-g">8.5M</div><div class="l">Ramadan 2026 Umrah pilgrims</div><div class="d">+15% YoY. Target: 30M Hajj+Umrah pilgrims annually by 2030.</div></div>
+    <div class="kpi"><div class="k k-a">50+</div><div class="l">Active OTAs in KSA</div><div class="d">Booking, Expedia, Agoda, Wego, Flyin, Cleartrip, Traveloka and others all compete here.</div></div>
+  </div>
+
+  <h3>Four forces that define the battlefield</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Force</th><th>2026 State</th><th>Implication for MacQueen</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="f">Domestic-first demand</td>
+          <td>Q1 2026 domestic trips <strong>+16% to 28.9M</strong>, 78% of all tourism visits; inbound <strong>−13%</strong> on regional conflict. Hotel stock 176,260 rooms, licensed accommodation <strong>+22.7%</strong>.</td>
+          <td>Domestic Saudi hotel demand is the resilient segment. A hotel-only product is in the right vertical — it is simply executing it badly.</td>
+        </tr>
+        <tr>
+          <td class="f">Religious travel at scale</td>
+          <td>1.71M Hajj pilgrims 2026; 8.5M Umrah in Ramadan alone. Nusuk is the official government booking rail; Almosafer serves this via Mawasim, largely <strong>B2B and package-led</strong>.</td>
+          <td>The independent B2C Umrah hotel booker is underserved. This is the single largest addressable gap.</td>
+        </tr>
+        <tr>
+          <td class="f">Payments modernisation</td>
+          <td>mada mandated on every Saudi bank card; ~60% of online payment volume via wallets (STC Pay, Apple Pay) and Sarie; BNPL used by <strong>42%+ of consumers</strong>, ~$5.29B market in 2026; Tabby and Tamara SAMA-licensed.</td>
+          <td>Checkout is now a competitive surface in its own right. Inline BNPL and wallet support are table stakes, not differentiators.</td>
+        </tr>
+        <tr>
+          <td class="f">Agentic distribution</td>
+          <td>Almosafer launched a ChatGPT app on <strong>8 April 2026</strong> — first Saudi consumer app on the platform. Expedia, Booking, Skyscanner, Viator, Hyatt and Accor have done the same. MCP-based surfaces are becoming a distribution channel.</td>
+          <td>A new channel opened and the incumbent took it first. Fast-following here is cheap; not following is fatal.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="co amb">
+    <div class="t">Regulatory floor — non-negotiable</div>
+    <p><strong>PDPL</strong> (in force since Sept 2023, compliance deadline Sept 2024) governs collection, processing and storage of Saudi residents' personal data, with heavy restriction on cross-border transfer of sensitive data and fines up to SAR 5M plus criminal exposure for unlawful disclosure. <strong>ZATCA Phase 2</strong> requires B2B/B2G invoices to be cleared through the Fatoora platform before issuance. Any MacQueen B2B motion — corporate travel, agent portals, Umrah operator supply — must be built with clearance-model e-invoicing and KSA data residency from day one, not retrofitted.</p>
+  </div>
+</section>
+
+<!-- ============ 04 ============ -->
+<section id="s4">
+  <div class="snum">§ 04 — Head-to-Head Scorecard</div>
+  <h2>Weighted assessment across five axes.</h2>
+  <p class="sub">Scored 0–10 against what a competent 2026 OTA should deliver, not against each other. Weighting reflects revenue impact in hotel distribution: reliability and features dominate because a booking that fails or a filter that is missing destroys the transaction outright.</p>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr><th>Dimension</th><th>Weight</th><th>MacQueen (A)</th><th style="width:170px"></th><th>Almosafer (B)</th><th style="width:170px"></th><th>Gap driver</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="f">Reliability</td><td class="n">25%</td>
+          <td class="n">3.0</td><td><div class="sb"><div class="sb-t"><div class="sb-f sb-a" style="width:30%"></div></div><div class="sb-v">3.0</div></div></td>
+          <td class="n">6.5</td><td><div class="sb"><div class="sb-t"><div class="sb-f sb-b" style="width:65%"></div></div><div class="sb-v">6.5</div></div></td>
+          <td>Occupancy/booking-integrity defects vs servicing &amp; refund failures</td>
+        </tr>
+        <tr>
+          <td class="f">Features</td><td class="n">20%</td>
+          <td class="n">2.5</td><td><div class="sb"><div class="sb-t"><div class="sb-f sb-a" style="width:25%"></div></div><div class="sb-v">2.5</div></div></td>
+          <td class="n">8.5</td><td><div class="sb"><div class="sb-t"><div class="sb-f sb-b" style="width:85%"></div></div><div class="sb-v">8.5</div></div></td>
+          <td>1 vertical, no reviews, thin filters vs 7 verticals + loyalty mesh + AI surface</td>
+        </tr>
+        <tr>
+          <td class="f">Performance</td><td class="n">20%</td>
+          <td class="n">3.5</td><td><div class="sb"><div class="sb-t"><div class="sb-f sb-a" style="width:35%"></div></div><div class="sb-v">3.5</div></div></td>
+          <td class="n">7.0</td><td><div class="sb"><div class="sb-t"><div class="sb-f sb-b" style="width:70%"></div></div><div class="sb-v">7.0</div></div></td>
+          <td>"Extremely unresponsive" reports + 86MB binary vs scale-tuned but heavy stack</td>
+        </tr>
+        <tr>
+          <td class="f">User Experience</td><td class="n">20%</td>
+          <td class="n">4.0</td><td><div class="sb"><div class="sb-t"><div class="sb-f sb-a" style="width:40%"></div></div><div class="sb-v">4.0</div></div></td>
+          <td class="n">7.5</td><td><div class="sb"><div class="sb-t"><div class="sb-f sb-b" style="width:75%"></div></div><div class="sb-v">7.5</div></div></td>
+          <td>No decision-support layer vs 3D tours, granular filters, bilingual 24/7</td>
+        </tr>
+        <tr>
+          <td class="f">Technical Execution</td><td class="n">15%</td>
+          <td class="n">2.5</td><td><div class="sb"><div class="sb-t"><div class="sb-f sb-a" style="width:25%"></div></div><div class="sb-v">2.5</div></div></td>
+          <td class="n">8.0</td><td><div class="sb"><div class="sb-t"><div class="sb-f sb-b" style="width:80%"></div></div><div class="sb-v">8.0</div></div></td>
+          <td>14-month release drought + split version lines vs continuous delivery + MCP surface</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Weighted totals</h4>
+  <div class="gapbar">
+    <div style="width:29.6%;background:linear-gradient(90deg,var(--orange-deep),var(--orange))">MacQueen &nbsp;3.1</div>
+    <div style="width:70.4%;background:linear-gradient(90deg,var(--purple),var(--purple-deep))">Almosafer &nbsp;7.4</div>
+  </div>
+  <p style="font-size:12px;color:var(--ink-3)">Gap of <strong>4.3 points</strong>. Roughly 60% of that gap is closable with engineering discipline alone — release cadence, booking integrity, filters, reviews, performance budgets. The remaining 40% is structural (multi-vertical breadth, loyalty partnerships, brand) and should be <em>routed around</em> rather than attacked head-on.</p>
+</section>
+
+<!-- ============ 05 ============ -->
+<section id="s5">
+  <div class="snum">§ 05 — Reliability</div>
+  <h2>Both products fail — at different points in the funnel.</h2>
+  <p class="sub">This is the most important axis, and the most instructive. MacQueen fails <em>before and during</em> the booking. Almosafer fails <em>after</em> it. Those are very different problems with very different fixes, and the asymmetry is MacQueen's entire opportunity.</p>
+
+  <div class="grid2">
+    <div class="card" style="border-top:3px solid var(--orange)">
+      <span class="pill p-a">MacQueen — pre-transaction failure</span>
+      <h4>Booking-integrity defects</h4>
+      <ul>
+        <li><span class="pill p-crit">Critical</span> <strong>Occupancy contract break.</strong> A user booking for 2 adults + 2 children reports the request reaching the property as a king bed with no child provision, producing surprise charges at check-in. This is not a UI bug — it is a <strong>data-contract failure between the search/booking layer and the supplier payload</strong>: child counts and ages are being dropped or flattened before transmission.</li>
+        <li><span class="pill p-crit">Critical</span> <strong>Availability drift.</strong> Properties surfaced in search return as fully booked, or priced differently on the property side. Signature of cached rate/availability with no mandatory pre-book revalidation step.</li>
+        <li><span class="pill p-warn">High</span> <strong>Support non-response.</strong> Users report unresolved room issues with no reply, against a public "24/7 customer support" claim. A support SLA that is advertised and not met is a reliability defect, not a marketing one.</li>
+        <li><span class="pill p-warn">High</span> <strong>Price-claim failure.</strong> Multiple reports of prices exceeding alternatives against a "best rates" / "up to 50% savings" claim. The claim itself is the defect.</li>
+      </ul>
+      <div class="co red" style="margin-bottom:0">
+        <div class="t">Why this class of bug is existential</div>
+        <p>An occupancy mismatch is discovered at the hotel front desk, in front of the user's family, in a foreign city. It converts one bad booking into permanent churn, a public one-star review, and a chargeback. In hotel distribution, booking-integrity defects have a loss multiple far above their frequency.</p>
+      </div>
+    </div>
+
+    <div class="card" style="border-top:3px solid var(--purple)">
+      <span class="pill p-b">Almosafer — post-transaction failure</span>
+      <h4>Servicing and refund failure</h4>
+      <ul>
+        <li><span class="pill p-crit">Critical</span> <strong>Refund non-resolution.</strong> Recurring reports of refund requests unresolved over long periods, including users describing 80+ emails to support without resolution.</li>
+        <li><span class="pill p-crit">Critical</span> <strong>Bookings not honoured.</strong> Confirmed reservations reported as not recognised by hotels or airlines on arrival — a supplier-confirmation reconciliation gap at scale.</li>
+        <li><span class="pill p-warn">High</span> <strong>Support degradation over time.</strong> A consistent theme that service quality was strong at launch and declined as volume grew. Classic ops-scaling failure.</li>
+        <li><span class="pill p-warn">High</span> <strong>Fee transparency.</strong> Complaints of hidden fees and misleading offer presentation at checkout.</li>
+        <li><span class="pill p-inf">Inferred</span> <strong>Update regressions.</strong> Crash and regression complaints clustering after releases suggests high release velocity without proportionate release-quality gating.</li>
+      </ul>
+      <div class="co pur" style="margin-bottom:0">
+        <div class="t">Why the incumbent cannot easily fix this</div>
+        <p>Refund and disruption handling at $1.5B GBV across seven verticals, five countries and four business lines is a <em>combinatorial</em> problem: every supplier has different cancellation semantics, settlement timing and dispute process. Fixing it requires re-architecting reconciliation across the whole estate. A single-vertical challenger with a narrow supplier set can offer an automated, guaranteed refund experience that the incumbent structurally cannot match.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Reliability target state for MacQueen</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Control</th><th>Mechanism</th><th>Target SLO</th></tr></thead>
+      <tbody>
+        <tr><td class="f">Pre-book revalidation</td><td>Mandatory synchronous availability + price re-check against supplier immediately before payment authorisation. Hard-block on mismatch, with an explicit "price changed" interstitial rather than a silent failure.</td><td class="n">Post-payment booking failure &lt; 0.5%</td></tr>
+        <tr><td class="f">Occupancy schema contract</td><td>Strict typed room-occupancy schema (<code>adults[]</code>, <code>children[{age}]</code>, <code>bedding</code>, <code>maxOccupancy</code>) validated at every hop. Contract tests in CI against every supplier adapter. Refuse to transmit a booking that fails validation.</td><td class="n">Occupancy defect rate = 0</td></tr>
+        <tr><td class="f">Idempotent booking</td><td>Client-generated idempotency key per booking attempt; saga pattern with explicit compensation for partial failure (charged-not-booked, booked-not-charged).</td><td class="n">Zero duplicate charges</td></tr>
+        <tr><td class="f">Supplier circuit breakers</td><td>Per-supplier breaker with deadline budget. A degraded supplier is dropped from fan-out rather than allowed to time out the whole search.</td><td class="n">Search availability ≥ 99.9%</td></tr>
+        <tr><td class="f">Automated refund engine</td><td>Rules engine encoding each supplier's cancellation policy; auto-approve and auto-initiate within policy without human touch. Published, visible refund clock in-app.</td><td class="n">90% of eligible refunds initiated &lt; 60s</td></tr>
+        <tr><td class="f">Booking reconciliation</td><td>Nightly three-way reconciliation: our booking record ↔ supplier confirmation ↔ payment settlement. Auto-flag and pre-emptively contact the user on divergence <em>before</em> travel date.</td><td class="n">Unreconciled bookings &lt; 0.1% at T−72h</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 06 ============ -->
+<section id="s6">
+  <div class="snum">§ 06 — Features &amp; Product Surface</div>
+  <h2>A one-vertical product against a seven-vertical platform.</h2>
+  <p class="sub">This is the widest raw gap and the one most often misread. The correct response is <strong>not</strong> to chase parity — a challenger that adds flights, cars, activities and eSIM badly will simply be bad at seven things instead of one. The correct response is depth in the chosen vertical plus the two adjacencies that actually compound.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Capability</th><th>MacQueen (A)</th><th>Almosafer (B)</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td class="f">Hotel inventory</td><td>1.5M+ claimed</td><td>1.5M+ claimed (hotels, resorts, chalets, apartments)</td><td><span class="pill p-crit">Parity</span> Identical headline number — strongly suggests overlapping wholesale supply. No differentiation.</td></tr>
+        <tr><td class="f">Flights</td><td>None</td><td>450+ airlines (Saudia, flynas, Emirates, Qatar); ~70% of GBV</td><td><span class="pill p-crit">Structural gap</span> Flights are the acquisition engine in KSA; hotels attach to them. MacQueen has no top-of-funnel.</td></tr>
+        <tr><td class="f">Packages / holidays</td><td>None</td><td>Pre-planned packages across budgets</td><td><span class="pill p-crit">Gap</span></td></tr>
+        <tr><td class="f">Ancillaries</td><td>None</td><td>Activities, airport transfers, car rental, eSIM</td><td><span class="pill p-crit">Gap</span> High-margin attach revenue MacQueen is not capturing.</td></tr>
+        <tr><td class="f">Property reviews &amp; ratings</td><td><strong>Absent</strong> — users explicitly report no way to rate or review</td><td>Present, plus 3D tours and amenity round-ups</td><td><span class="pill p-crit">Critical</span> In hotel search, reviews <em>are</em> the product. Their absence is a conversion defect, not a missing nice-to-have.</td></tr>
+        <tr><td class="f">Search filters</td><td>"Very limited number of filter options"</td><td>Granular: location, price, rating, preference facets</td><td><span class="pill p-crit">Critical</span> Filters are the primary decision instrument in a 1.5M-property corpus.</td></tr>
+        <tr><td class="f">Loyalty</td><td>Wallet + travel credits. Investor material describes points pegged to flight-mile value and "linked to company shares".</td><td>Almosafer Wallet + external mesh: <strong>Qitaf, Mokafaa, Alfursan, Shukran</strong>; BSF Almosafer Visa card (up to 20% points on travel)</td><td><span class="pill p-crit">Severe gap</span> Almosafer plugs into the loyalty currencies Saudis already hold. MacQueen asks them to start a new balance from zero.</td></tr>
+        <tr><td class="f">Payments</td><td>Not publicly specified</td><td>Cards, mada, KNET, Pay Later, Pay at Hotel, bank instalments, inline BNPL</td><td><span class="pill p-warn">Gap</span> Requires verification, but no public evidence of mada/BNPL/wallet breadth.</td></tr>
+        <tr><td class="f">AI / agentic surface</td><td>None</td><td><strong>ChatGPT app, 8 Apr 2026</strong> — Arabic + English conversational search, personalised recommendations, multi-city itineraries. AI also in pricing and personalisation.</td><td><span class="pill p-crit">Channel gap</span> A new distribution surface opened and the incumbent claimed the first-mover narrative.</td></tr>
+        <tr><td class="f">B2B / corporate</td><td>B2B company profile authored, in outbound circulation — motion is early</td><td>Almosafer Business (corporate + government), Discover Saudi (DMC), Mawasim B2B portals, live on Nusuk</td><td><span class="pill p-warn">Gap</span> But B2B for Umrah operators is winnable — see §11.</td></tr>
+        <tr><td class="f">Religious travel</td><td>None specialised</td><td>Mawasim: Makkah/Madinah offices, B2B portals, Nusuk B2C+B2B, Direct Hajj flight partner</td><td><span class="pill p-inf">Opportunity</span> Almosafer serves this <em>package- and B2B-led</em>. The independent B2C hotel booker is the opening.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="co">
+    <div class="t">The loyalty point is worth dwelling on</div>
+    <p>Almosafer's integration with Qitaf (stc), Mokafaa (Al Rajhi), Alfursan (Saudia) and Shukran means a Saudi user can pay with points they <em>already own</em>. This is a switching-cost moat built out of other companies' balance sheets. MacQueen's counter-move is not to build a rival points currency — it is to integrate the same external programmes, which is a partnership and engineering task, not a capital one, and to add the one thing Almosafer's wallet does not do: <strong>instant, cash-equivalent redemption with no blackout on Makkah/Madinah inventory during peak season.</strong></p>
+  </div>
+</section>
+
+<!-- ============ 07 ============ -->
+<section id="s7">
+  <div class="snum">§ 07 — Performance</div>
+  <h2>Responsiveness is MacQueen's most-cited user complaint.</h2>
+  <p class="sub">No first-party measurement was possible (§02), so this section separates what is observed from what is inferred and specifies the budgets that should govern the rebuild.</p>
+
+  <div class="grid3">
+    <div class="kpi"><div class="k k-r">86.4 MB</div><div class="l">MacQueen iOS binary</div><div class="d"><span class="pill p-ok">Observed</span> Heavy for a search-and-book client. Suggests bundled uncompressed assets, absent app-thinning/asset-catalog slicing, or a webview-heavy shell.</div></div>
+    <div class="kpi"><div class="k k-a">"Extremely unresponsive"</div><div class="l">Recurring user language</div><div class="d"><span class="pill p-ok">Observed</span> Paired with "quite old in its features" — the two together read as an ageing client on an unoptimised search path.</div></div>
+    <div class="kpi"><div class="k k-p">~8.4K/mo</div><div class="l">MacQueen Android installs</div><div class="d"><span class="pill p-ok">Observed</span> Install velocity with no release cadence behind it — acquisition spend flowing into a stale product.</div></div>
+  </div>
+
+  <h3>Inferred performance model</h3>
+  <p><span class="pill p-inf">Inferred</span> The combination of unresponsiveness, availability drift and a "compare prices to find the best rate" value proposition points to a <strong>synchronous, serial supplier fan-out on the critical path</strong>: the client waits while the backend queries multiple bedbank APIs in sequence and only then renders. In that design, p95 search latency is the sum of the slowest suppliers plus mapping and dedup, and a single degraded supplier stalls the whole result set. It is the single most common architectural failure in mid-size OTAs and it matches every reported symptom.</p>
+
+  <h3>Performance budgets to adopt</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Surface</th><th>Metric</th><th>Budget</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr><td class="f">Search API</td><td>Time to first result batch (p95)</td><td class="n">&lt; 800 ms</td><td>Stream partial results as suppliers respond; never block on the slowest.</td></tr>
+        <tr><td class="f">Search API</td><td>Full result set (p95)</td><td class="n">&lt; 2.5 s</td><td>Hard deadline budget; late suppliers are dropped, not waited on.</td></tr>
+        <tr><td class="f">Search API</td><td>Cache hit ratio, hot routes</td><td class="n">&gt; 70%</td><td>Two-tier cache on popular city/date/occupancy tuples with bounded TTL.</td></tr>
+        <tr><td class="f">Mobile app</td><td>Cold start to interactive</td><td class="n">&lt; 2.0 s</td><td>Mid-tier Android on 4G is the reference device, not a flagship on wifi.</td></tr>
+        <tr><td class="f">Mobile app</td><td>Binary size</td><td class="n">&lt; 40 MB</td><td>Roughly half current. Direct impact on install completion over mobile data.</td></tr>
+        <tr><td class="f">Mobile app</td><td>Crash-free sessions</td><td class="n">&gt; 99.7%</td><td>Non-negotiable floor before any growth spend resumes.</td></tr>
+        <tr><td class="f">Web</td><td>LCP / INP / CLS</td><td class="n">&lt; 2.5 s / &lt; 200 ms / &lt; 0.1</td><td>Core Web Vitals "good" thresholds; these are also organic-search ranking inputs.</td></tr>
+        <tr><td class="f">Checkout</td><td>Payment authorisation (p95)</td><td class="n">&lt; 3.0 s</td><td>Including 3DS2. Every second here is measurable abandonment.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="co amb">
+    <div class="t">Why the budgets matter commercially</div>
+    <p>Industry benchmarks put large-OTA conversion at 12–15% against 2.2–3.9% for typical hotel sites, and desktop conversion at 1.8–2.3× mobile even though mobile is ~62% of traffic. Meanwhile 44% of travel-site visits are affected by slowness, broken flows or confusing navigation. Mobile performance is therefore not a hygiene item for MacQueen — it is the largest single lever on revenue per session, because that is where both the traffic and the deficit are.</p>
+  </div>
+</section>
+
+<!-- ============ 08 ============ -->
+<section id="s8">
+  <div class="snum">§ 08 — User Experience</div>
+  <h2>MacQueen has a search box. It does not have a decision layer.</h2>
+  <p class="sub">Booking a hotel is a comparison and reassurance task, not a retrieval task. The user does not need to be shown 1.5 million properties; they need to be helped to eliminate 1,499,990 of them and to feel safe about the one that remains. MacQueen's reported gaps — no reviews, minimal filters — mean it does the retrieval and leaves the entire decision to the user.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h4 style="margin-top:0">The three missing UX layers</h4>
+      <ol>
+        <li><strong>Elimination.</strong> Rich, fast, multi-select filters — and for the Saudi context specifically: distance-to-Haram in metres, family/connecting rooms, women-only floors, prayer facilities, mahram-appropriate configurations, shuttle availability, kitchenette, extended-stay pricing.</li>
+        <li><strong>Reassurance.</strong> Reviews, verified photography, exact bedding and occupancy confirmation, total price including all fees and VAT shown from the first result card, and a plain-language cancellation policy at the point of choice rather than in a terms link.</li>
+        <li><strong>Recovery.</strong> Self-serve modification and cancellation, visible refund status with a countdown, and an in-app disruption path. This is the layer Almosafer is weakest on and it is almost entirely a product-and-systems problem rather than a headcount problem.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h4 style="margin-top:0">Arabic-first is a product decision, not a localisation task</h4>
+      <ul>
+        <li>Full RTL layout correctness across every surface including receipts, maps, date pickers and PDF vouchers — not a mirrored stylesheet.</li>
+        <li><strong>Hijri calendar as a first-class date system</strong>, with Ramadan and Hajj/Umrah season awareness built into search defaults and pricing display.</li>
+        <li>Diacritic-insensitive, dialect-tolerant Arabic search — a user typing <span style="font-family:var(--mono)">مكه</span> or <span style="font-family:var(--mono)">مكة المكرمة</span> must land identically, and common transliterations must resolve.</li>
+        <li>Arabic-Indic numeral preference honoured per user, and SAR-native pricing with no FX ambiguity.</li>
+        <li>Support in Arabic with parity of speed and quality against English — Almosafer advertises bilingual 24/7 support and the complaint record shows the gap is in delivery, not in the promise.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="co">
+    <div class="t">Where Almosafer's UX is genuinely strong — and should be copied</div>
+    <p>3D property tours, granular faceted filtering, integrated loyalty redemption at checkout, and a payment sheet offering mada, wallets, Pay Later, Pay at Hotel and instalments inline rather than by redirect. None of this is proprietary. All of it is achievable inside two quarters. There is no reason for MacQueen to be behind on any of it.</p>
+  </div>
+</section>
+
+<!-- ============ 09 ============ -->
+<section id="s9">
+  <div class="snum">§ 09 — Technical Execution</div>
+  <h2>The most damning evidence in this report is a set of dates.</h2>
+  <p class="sub">Product quality is hard to measure from outside. Shipping cadence is not — it is publicly timestamped on both app stores, and it is the single most reliable external proxy for engineering health.</p>
+
+  <div class="tl">
+    <div class="tl-i">
+      <div class="tl-d">15 May 2025</div>
+      <div class="tl-t">MacQueen iOS 22.23.6</div>
+      <div class="tl-b">Part of a tight release cluster — 22.23.6, 22.23.7, 22.23.8 within twelve days. Evidence that a functioning release pipeline existed.</div>
+    </div>
+    <div class="tl-i">
+      <div class="tl-d">27 May 2025</div>
+      <div class="tl-t">MacQueen iOS 22.23.8 — last public iOS release</div>
+      <div class="tl-b">"Several enhancements and bug fixes." Nothing has shipped on iOS since.</div>
+    </div>
+    <div class="tl-i r">
+      <div class="tl-d">12 Jun 2025</div>
+      <div class="tl-t">MacQueen Android 6.5.0 — last public Android release</div>
+      <div class="tl-b">Note the version line: <code>6.5.0</code> on Android against <code>22.23.8</code> on iOS. Two unrelated versioning schemes means two independent codebases and release trains with no shared cadence, no common release train, and near-certain feature drift between platforms.</div>
+    </div>
+    <div class="tl-i b">
+      <div class="tl-d">8 Apr 2026</div>
+      <div class="tl-t">Almosafer launches its ChatGPT app</div>
+      <div class="tl-b">First Saudi consumer application distributed through OpenAI's platform. 1.5M+ properties queryable conversationally in Arabic and English, with personalised recommendations and multi-city itinerary construction. Ten months into MacQueen's release drought, the incumbent opened a new channel.</div>
+    </div>
+    <div class="tl-i b">
+      <div class="tl-d">13 Apr 2026</div>
+      <div class="tl-t">Skyscanner follows in the region</div>
+      <div class="tl-b">Confirming this is now a channel, not a stunt. Expedia, Booking, Viator, Hyatt and Accor are all present on the same surface.</div>
+    </div>
+    <div class="tl-i r">
+      <div class="tl-d">27 Jul 2026 · today</div>
+      <div class="tl-t">MacQueen: ~14 months without a public release</div>
+      <div class="tl-b">While continuing to acquire roughly 8.4K Android installs per month into a product that has not been improved in over a year.</div>
+    </div>
+  </div>
+
+  <h3>What the artefacts say about the engineering organisation</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Signal</th><th>Reading</th><th>Confidence</th></tr></thead>
+      <tbody>
+        <tr><td class="f">Divergent version lines (22.x vs 6.x)</td><td>Two native codebases maintained independently, no unified release train, no shared feature-flag or config plane. Every feature costs double and lands at different times.</td><td><span class="pill p-inf">Inferred</span></td></tr>
+        <tr><td class="f">14-month release gap</td><td>Either the team was reassigned, the pipeline broke, or a rewrite is in flight that has not shipped. All three are consistent with the <code>v3.macqueen.co</code> hostname suggesting a versioned rebuild.</td><td><span class="pill p-inf">Inferred</span></td></tr>
+        <tr><td class="f">86.4 MB binary</td><td>No app-thinning, uncompressed bundled assets, or heavy embedded runtime. Directly raises install-abandonment on mobile data.</td><td><span class="pill p-ok">Observed size</span></td></tr>
+        <tr><td class="f">Vendor-namespaced package ID <code>com.zeidex.macqueen</code></td><td>The client ships under the build partner's namespace rather than the product's own. Cosmetic, but it signals that platform ownership sits with the vendor rather than the product company — a governance risk for an IPO-track asset.</td><td><span class="pill p-ok">Observed</span></td></tr>
+        <tr><td class="f">Blockchain/crypto investor narrative</td><td>Investor material describes a "private, yet decentralised blockchain", fiat+crypto payment (BTC/ETH), crypto-MasterCards, and loyalty points "linked to company shares". This is a 2021-vintage thesis carrying real 2026 cost: it is irrelevant to the customer's problem, it complicates SAMA-regulated payment positioning, and points linked to equity raise securities questions. It also signals staleness to institutional investors.</td><td><span class="pill p-ok">Observed on invest.macqueen.co</span></td></tr>
+        <tr><td class="f">Roadmap language "Public Beta 1"</td><td>Investor-facing material describing beta launch while the product has been live since January 2020 — the external narrative and the product are years out of sync.</td><td><span class="pill p-ok">Observed</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="co red">
+    <div class="t">Blunt read</div>
+    <p>MacQueen currently presents as an <strong>asset in maintenance</strong> rather than a product in development: a live app with paid acquisition flowing into it, a stale investor narrative attached to it, and no shipping. The gap between "IPO-ready platform" positioning and a 14-month release drought is the credibility problem to solve first, and it is solved by shipping, not by repositioning.</p>
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+  <div class="snum">§ 10 — The Wedge</div>
+  <h2>Where scale makes Almosafer worse, not better.</h2>
+  <p class="sub">A challenger must attack where the incumbent's strengths invert into weaknesses. Three such places exist.</p>
+
+  <div class="grid3">
+    <div class="card">
+      <span class="pill p-crit">Wedge 1</span>
+      <h4>Servicing correctness</h4>
+      <p style="font-size:13px">Refunds and disruption handling across 7 verticals × 5 countries × hundreds of suppliers is combinatorially hard. Every additional vertical Almosafer adds makes reconciliation harder. A single-vertical player with a curated supplier set can <strong>guarantee</strong> an outcome the incumbent can only attempt.</p>
+      <p style="font-size:12px;color:var(--ink-3);margin-bottom:0"><strong>Inversion:</strong> breadth → complexity → servicing failure.</p>
+    </div>
+    <div class="card">
+      <span class="pill p-crit">Wedge 2</span>
+      <h4>Religious-travel B2C depth</h4>
+      <p style="font-size:13px">Almosafer serves Hajj/Umrah primarily through Mawasim — package-led, B2B portals, Nusuk integration, agent sourcing. That structure is optimised for operators and pilgrim groups, not for the independent Saudi or GCC family booking a Makkah hotel for a weekend Umrah. 8.5M pilgrims in Ramadan 2026 alone, growing 15% YoY.</p>
+      <p style="font-size:12px;color:var(--ink-3);margin-bottom:0"><strong>Inversion:</strong> a dedicated B2B division makes the B2C long tail nobody's priority.</p>
+    </div>
+    <div class="card">
+      <span class="pill p-crit">Wedge 3</span>
+      <h4>Trust primitives</h4>
+      <p style="font-size:13px">Hidden fees, unclear cancellation terms and unconfirmed bookings are complaints of scaled marketplaces optimising for conversion. A challenger can make <strong>total-price-first display, guaranteed occupancy, and a visible refund clock</strong> load-bearing product promises — the incumbent cannot adopt them without taking a measurable conversion hit on existing volume.</p>
+      <p style="font-size:12px;color:var(--ink-3);margin-bottom:0"><strong>Inversion:</strong> existing revenue makes honest defaults expensive to adopt.</p>
+    </div>
+  </div>
+
+  <div class="co grn">
+    <div class="t">Where NOT to attack</div>
+    <p><strong>Do not attack on price.</strong> Contracting leverage at $1.5B GBV cannot be beaten by a reseller. <strong>Do not attack on breadth.</strong> Seven verticals badly is worse than one vertical excellently. <strong>Do not attack on brand.</strong> ~70% unaided brand awareness in Saudi is not a marketing-budget problem. <strong>Do not build a proprietary loyalty currency.</strong> Integrate the currencies users already hold instead.</p>
+  </div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+  <div class="snum">§ 11 — Disruption Strategy</div>
+  <h2>Reposition MacQueen as the Kingdom's stay-booking specialist.</h2>
+  <p class="sub">From "the same hotels, cheaper" to <strong>"the stay you actually booked, or we make it right — with the deepest Makkah, Madinah and Saudi domestic coverage in the market."</strong> Four initiatives, in dependency order.</p>
+
+  <div class="card">
+    <span class="pill p-a">Initiative 1 · Foundation</span>
+    <h4 style="margin-top:8px">Booking Integrity Guarantee</h4>
+    <p>Fix the occupancy contract, add mandatory pre-book revalidation, then <strong>make the fix the marketing</strong>. A public, contractual guarantee: <em>if the room delivered does not match the room booked — beds, occupancy, board basis — MacQueen pays the difference and refunds the booking fee, automatically, without the user having to ask.</em></p>
+    <ul style="margin-bottom:0">
+      <li>Requires the typed occupancy schema, supplier contract tests, and pre-book revalidation from §05.</li>
+      <li>Requires an automated claims path: the user uploads the front-desk discrepancy in-app, and the rules engine settles inside 24 hours.</li>
+      <li>Directly converts MacQueen's worst current defect into its sharpest differentiator, and it targets precisely the failure mode Almosafer's own review corpus is full of.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <span class="pill p-a">Initiative 2 · Wedge</span>
+    <h4 style="margin-top:8px">Haramain Stay Engine — the Makkah/Madinah data moat</h4>
+    <p>Build the property-data layer nobody else has bothered to build, for the highest-volume, highest-repeat hotel demand in the Kingdom.</p>
+    <ul>
+      <li><strong>Verified walking distance to the Haram</strong> in metres, per property, per entrance gate — measured and maintained, not estimated from a centroid. Sortable and filterable as a first-class facet.</li>
+      <li><strong>Family and mahram-appropriate room configurations</strong> surfaced explicitly: connecting rooms, women-only floors, family suites, extra-bed policy with child-age rules resolved before booking.</li>
+      <li><strong>Season-aware pricing and availability</strong> on the Hijri calendar: Ramadan, last-ten-nights, Hajj season, school holidays — with historical price curves so users can see whether today's rate is good.</li>
+      <li><strong>Operational facts that decide the booking:</strong> shuttle service and frequency, distance to the nearest gate, prayer-time-aware check-in, kitchenette, luggage-hold, group check-in support.</li>
+      <li><strong>Umrah operator supply portal (B2B):</strong> small and mid-size operators need allotment management, group booking, rooming lists and rapid rebooking. Almosafer serves the large end through Mawasim; the long tail is unserved. ZATCA Phase 2 clearance-model e-invoicing must be native here.</li>
+    </ul>
+    <p style="margin-bottom:0"><strong>Why this is defensible:</strong> it is a proprietary dataset built through physical verification and operator relationships in a city where MacQueen is geographically native. It cannot be copied from a bedbank feed, and it compounds — every verified property makes the next comparison better.</p>
+  </div>
+
+  <div class="card">
+    <span class="pill p-a">Initiative 3 · Parity</span>
+    <h4 style="margin-top:8px">Close the table-stakes gap</h4>
+    <ul style="margin-bottom:0">
+      <li><strong>Decision layer:</strong> property reviews and ratings, verified photography, granular multi-select filters, total-price-inclusive display from the first result card.</li>
+      <li><strong>Payments:</strong> mada, Apple Pay, STC Pay, Tabby and Tamara <em>inline</em> at checkout (not redirect), 3DS2 frictionless flow, SAR-native pricing.</li>
+      <li><strong>Loyalty by integration, not invention:</strong> pursue Qitaf, Mokafaa and Alfursan redemption. Retire the crypto/blockchain and share-linked-points narrative entirely — it adds regulatory friction and subtracts credibility.</li>
+      <li><strong>Self-serve servicing:</strong> in-app cancel, modify, rebook; visible refund clock; automated refund engine per §05.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <span class="pill p-a">Initiative 4 · Channel</span>
+    <h4 style="margin-top:8px">Agentic distribution — fast-follow with a sharper edge</h4>
+    <p>Almosafer took the first-mover narrative on ChatGPT in April 2026. The channel is not closed — Expedia, Booking, Skyscanner, Viator, Hyatt and Accor all coexist there. MacQueen should ship an <strong>MCP server exposing its stay inventory and the Haramain dataset</strong>, which is the part no other agent surface can answer well.</p>
+    <ul style="margin-bottom:0">
+      <li>Differentiate on <strong>answer quality for Saudi-specific questions</strong>: "a hotel within 300m of King Abdulaziz Gate that has a family room for two adults and two children under 10, for the last ten nights of Ramadan."</li>
+      <li>Arabic dialect handling as a first-class requirement, not a translation layer.</li>
+      <li>Deep links back into an authenticated booking flow that preserves the exact occupancy the agent resolved — the Booking Integrity Guarantee is what makes agentic hand-off safe.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+  <div class="snum">§ 12 — Target Architecture</div>
+  <h2>What MacQueen has to be built on to execute the above.</h2>
+  <p class="sub">The strategy in §11 is not deliverable on two divergent native codebases with a serial supplier fan-out. This is the minimum viable platform.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Layer</th><th>Design</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="f">Client</td>
+          <td>Single cross-platform codebase (React Native or Flutter) with one version line across iOS, Android and web-shared design tokens. Remote feature-flag and config plane. Release train: weekly to internal, biweekly to store, with automated regression gating.</td>
+          <td>Ends the 22.x/6.x divergence, halves feature cost, and makes cadence recoverable. Cadence is the metric the market is currently reading.</td>
+        </tr>
+        <tr>
+          <td class="f">Search &amp; aggregation</td>
+          <td>Asynchronous parallel fan-out across suppliers with per-supplier deadline budgets and circuit breakers. Results streamed to the client as each supplier returns. Late suppliers dropped, not awaited.</td>
+          <td>Removes the serial-latency failure mode; makes p95 a function of the fastest useful subset rather than the slowest supplier.</td>
+        </tr>
+        <tr>
+          <td class="f">Property graph</td>
+          <td>Canonical property identity resolved across suppliers via geo + name + address fuzzy matching, with a stable internal ID. One property = one card, best rate wins. The Haramain verified-distance dataset attaches here.</td>
+          <td>Eliminates duplicate listings, enables true best-rate comparison, and is the substrate the data moat lives on.</td>
+        </tr>
+        <tr>
+          <td class="f">Rate cache</td>
+          <td>Two-tier: hot cache on popular (city, date-range, occupancy) tuples with bounded TTL and pre-warm on known seasonal peaks; cold path direct to supplier. Cache invalidated on any book-failure signal.</td>
+          <td>Delivers the &gt;70% hit ratio needed for the latency budget without reintroducing availability drift.</td>
+        </tr>
+        <tr>
+          <td class="f">Booking core</td>
+          <td>Typed occupancy contract validated at every hop. Idempotency keys per attempt. Saga orchestration with explicit compensation. Mandatory pre-book revalidation gate before payment authorisation.</td>
+          <td>This is the Booking Integrity Guarantee in code. The guarantee is only sellable if the system makes it cheap to honour.</td>
+        </tr>
+        <tr>
+          <td class="f">Payments</td>
+          <td>Orchestration layer over a KSA-licensed gateway: mada, Apple Pay, STC Pay, card, plus Tabby and Tamara as inline SDK integrations. 3DS2. Authorisation held, captured only on confirmed supplier booking.</td>
+          <td>Auth-then-capture is what makes charged-not-booked structurally impossible rather than merely rare.</td>
+        </tr>
+        <tr>
+          <td class="f">Servicing engine</td>
+          <td>Rules engine encoding per-supplier cancellation and modification policy. Auto-approve within policy, auto-initiate refund, expose live status to the user. Nightly three-way reconciliation across booking, supplier confirmation and settlement.</td>
+          <td>Turns the incumbent's worst failure mode into an automated, guaranteed capability.</td>
+        </tr>
+        <tr>
+          <td class="f">Agent surface</td>
+          <td>MCP server exposing search, property detail, Haramain facets and availability. Read-only inventory with deep-link hand-off to authenticated checkout.</td>
+          <td>Channel presence without taking transaction risk inside a third-party runtime.</td>
+        </tr>
+        <tr>
+          <td class="f">Observability</td>
+          <td>OpenTelemetry tracing across the full funnel — search → select → revalidate → authorise → book → confirm. Per-supplier SLO dashboards with error budgets. Funnel drop-off instrumented at every step.</td>
+          <td>None of the SLOs in this report are enforceable without this. It is the first thing to build, not the last.</td>
+        </tr>
+        <tr>
+          <td class="f">Data &amp; compliance</td>
+          <td>KSA-region data residency for personal data; PDPL processing register, consent and retention policy, SDAIA-aligned cross-border transfer controls. ZATCA Phase 2 clearance-model e-invoicing on the B2B path from day one.</td>
+          <td>Retrofitting PDPL and Fatoora compliance onto a live B2B platform costs multiples of building it in. Exposure runs to SAR 5M plus criminal liability.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 13 ============ -->
+<section id="s13">
+  <div class="snum">§ 13 — Execution Roadmap</div>
+  <h2>Four horizons, twelve months, hard gates between each.</h2>
+  <p class="sub">Sequenced by dependency and by credibility. Nothing in Horizon 2 or beyond is worth funding until Horizon 0 has demonstrably shipped.</p>
+
+  <div class="hz">
+    <div class="hz-h h0"><div><div class="ttl">Horizon 0 — Stop the bleeding</div><div class="per">Weeks 0–6 · Gate: a release ships</div></div><span class="pill p-crit">Blocking</span></div>
+    <div class="hz-b">
+      <ul style="margin-bottom:0">
+        <li><strong>Ship something.</strong> Any correct release on both stores breaks the 14-month narrative. This is the highest-leverage single action available.</li>
+        <li>Fix the occupancy data contract and add pre-book revalidation. These are the two defects generating irrecoverable churn.</li>
+        <li>Instrument the funnel end-to-end with OpenTelemetry. Establish the actual baseline — no further decisions should be made on inference, including the ones in this report.</li>
+        <li><strong>Pause or throttle paid acquisition</strong> until crash-free sessions exceed 99.5%. Spending to send users into a stale product with a known booking-integrity defect is negative-return.</li>
+        <li>Retire the crypto/blockchain and share-linked-points positioning from all investor-facing material.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="hz">
+    <div class="hz-h h1"><div><div class="ttl">Horizon 1 — Earn the right to be compared</div><div class="per">Months 2–5 · Gate: parity on the decision layer</div></div><span class="pill p-warn">Table stakes</span></div>
+    <div class="hz-b">
+      <ul style="margin-bottom:0">
+        <li>Unify onto a single cross-platform client with one version line and a fortnightly release train.</li>
+        <li>Ship the decision layer: reviews and ratings, granular filters, verified photography, total-price-inclusive display.</li>
+        <li>Rebuild search as async parallel fan-out with streaming results; hit the §07 latency budgets.</li>
+        <li>Payments: mada, Apple Pay, STC Pay, inline Tabby and Tamara, 3DS2, auth-then-capture.</li>
+        <li>Launch the <strong>Booking Integrity Guarantee</strong> publicly once the automated claims path is live.</li>
+        <li>Binary under 40 MB; cold start under 2s on the reference mid-tier Android device.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="hz">
+    <div class="hz-h h2"><div><div class="ttl">Horizon 2 — Build the moat</div><div class="per">Months 5–9 · Gate: Haramain coverage &amp; repeat rate</div></div><span class="pill p-b">Differentiation</span></div>
+    <div class="hz-b">
+      <ul style="margin-bottom:0">
+        <li>Haramain Stay Engine: verified gate-distance dataset across Makkah and Madinah inventory, family/mahram configuration facets, Hijri season-aware pricing curves.</li>
+        <li>Automated refund and servicing engine with the visible refund clock; three-way nightly reconciliation live.</li>
+        <li>Umrah operator B2B portal — allotments, rooming lists, group rebooking — with ZATCA Phase 2 clearance-model invoicing native.</li>
+        <li>Loyalty integration track: Qitaf, Mokafaa, Alfursan redemption partnerships.</li>
+        <li>PDPL programme complete: residency, processing register, retention, transfer controls.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="hz">
+    <div class="hz-h h3"><div><div class="ttl">Horizon 3 — Take the channel</div><div class="per">Months 9–12 · Gate: agent-sourced bookings</div></div><span class="pill p-ok">Expansion</span></div>
+    <div class="hz-b">
+      <ul style="margin-bottom:0">
+        <li>MCP server and agent-surface presence, differentiated on Saudi-specific and Haramain query quality in Arabic.</li>
+        <li>Selective vertical attach — <strong>only</strong> what compounds the stay: airport transfers and Haramain intercity transport. Not flights, not eSIM, not car rental.</li>
+        <li>Consider a curated flight-metasearch referral rather than full flight retailing: captures top-of-funnel intent without taking on airline distribution complexity, ticketing liability or IATA accreditation.</li>
+        <li>Re-open growth spend against a product that now has a defensible reason to be chosen.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 14 ============ -->
+<section id="s14">
+  <div class="snum">§ 14 — Scoreboard</div>
+  <h2>The metrics that decide whether this worked.</h2>
+  <p class="sub">Baselines are unknown because no first-party instrumentation exists — establishing them is a Horizon 0 deliverable. Targets are set against what the strategy requires, not against what is comfortable.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Metric</th><th>Category</th><th>Baseline</th><th>M6 target</th><th>M12 target</th></tr></thead>
+      <tbody>
+        <tr><td class="f">Store releases shipped / quarter</td><td>Execution</td><td class="n">0</td><td class="n">≥ 6</td><td class="n">≥ 6</td></tr>
+        <tr><td class="f">Crash-free sessions</td><td>Reliability</td><td class="n">unknown</td><td class="n">&gt; 99.5%</td><td class="n">&gt; 99.7%</td></tr>
+        <tr><td class="f">Post-payment booking failure rate</td><td>Reliability</td><td class="n">unknown</td><td class="n">&lt; 1.0%</td><td class="n">&lt; 0.5%</td></tr>
+        <tr><td class="f">Occupancy-mismatch incidents</td><td>Reliability</td><td class="n">non-zero</td><td class="n">0</td><td class="n">0</td></tr>
+        <tr><td class="f">Eligible refunds auto-initiated &lt; 60s</td><td>Servicing</td><td class="n">0%</td><td class="n">&gt; 70%</td><td class="n">&gt; 90%</td></tr>
+        <tr><td class="f">Search p95, first result batch</td><td>Performance</td><td class="n">unknown</td><td class="n">&lt; 1.2 s</td><td class="n">&lt; 0.8 s</td></tr>
+        <tr><td class="f">App cold start (mid-tier Android)</td><td>Performance</td><td class="n">unknown</td><td class="n">&lt; 2.5 s</td><td class="n">&lt; 2.0 s</td></tr>
+        <tr><td class="f">Binary size</td><td>Performance</td><td class="n">86.4 MB</td><td class="n">&lt; 55 MB</td><td class="n">&lt; 40 MB</td></tr>
+        <tr><td class="f">Search → book conversion</td><td>Product</td><td class="n">unknown</td><td class="n">+40% vs baseline</td><td class="n">+100% vs baseline</td></tr>
+        <tr><td class="f">Makkah/Madinah verified-distance coverage</td><td>Moat</td><td class="n">0%</td><td class="n">&gt; 60%</td><td class="n">&gt; 90%</td></tr>
+        <tr><td class="f">Repeat booking rate, 12-month</td><td>Moat</td><td class="n">unknown</td><td class="n">&gt; 20%</td><td class="n">&gt; 35%</td></tr>
+        <tr><td class="f">iOS rating (Saudi storefront)</td><td>Perception</td><td class="n">4.6 ★</td><td class="n">≥ 4.6 ★</td><td class="n">≥ 4.7 ★</td></tr>
+        <tr><td class="f">Agent-surface sourced bookings</td><td>Channel</td><td class="n">0</td><td class="n">—</td><td class="n">&gt; 3% of volume</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12px;color:var(--ink-3)">Rating is deliberately a lagging, defensive metric — protecting 4.6★ while volume grows is harder than raising it at low volume, and a rating decline during scale-up is the earliest signal that servicing has not been fixed.</p>
+</section>
+
+<!-- ============ 15 ============ -->
+<section id="s15">
+  <div class="snum">§ 15 — Risk Register</div>
+  <h2>What would make this fail.</h2>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Risk</th><th>Impact</th><th>Likelihood</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td class="f">No engineering capacity exists to restart cadence</td><td><span class="pill p-crit">Fatal</span></td><td>High — a 14-month gap usually means the team is gone or reassigned</td><td>Resolve this before anything else in this report is funded. A single cross-platform codebase is chosen specifically to make a small team viable.</td></tr>
+        <tr><td class="f">Almosafer closes the servicing gap first</td><td><span class="pill p-crit">High</span></td><td>Medium — it is a known, publicly-visible weakness with capital behind it</td><td>Move now; combine servicing with the Haramain data moat so the differentiation is not single-threaded on service quality alone.</td></tr>
+        <tr><td class="f">Haramain dataset cannot be maintained</td><td><span class="pill p-warn">High</span></td><td>Medium — physical verification does not scale for free</td><td>Seed with the top 300 properties by volume, then crowd-source verification from post-stay flows with incentives. Coverage target is 90%, not 100%.</td></tr>
+        <tr><td class="f">Loyalty partnerships (Qitaf/Mokafaa/Alfursan) refuse or stall</td><td><span class="pill p-warn">Medium</span></td><td>Medium-high — these are relationship-gated and the incumbent is already inside</td><td>Sequence as a Horizon 2 stretch, not a dependency. The moat must stand without it.</td></tr>
+        <tr><td class="f">Booking Integrity Guarantee is abused or mispriced</td><td><span class="pill p-warn">Medium</span></td><td>Medium</td><td>Cap per-booking liability, require in-app evidence, model expected claim cost against the current churn cost before launch. It should be cheaper than the churn it prevents — verify that, don't assume it.</td></tr>
+        <tr><td class="f">PDPL / ZATCA non-compliance on the B2B path</td><td><span class="pill p-crit">High</span></td><td>Low if built in, high if retrofitted</td><td>Compliance is a Horizon 2 entry gate, not a later cleanup. SAR 5M fines plus criminal exposure.</td></tr>
+        <tr><td class="f">Inbound demand stays depressed by regional conflict</td><td><span class="pill p-warn">Medium</span></td><td>Medium — inbound fell 13% in Q1 2026</td><td>The strategy is deliberately anchored on domestic (+16%) and religious travel (+15%), which are the resilient segments.</td></tr>
+        <tr><td class="f">This report's inferred findings are wrong</td><td><span class="pill p-warn">Medium</span></td><td>Low-medium — architecture claims are inferred, not measured</td><td>Horizon 0 instrumentation exists precisely to replace inference with measurement before Horizon 1 spend is committed. Re-baseline this report at week 6.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="co pur">
+    <div class="t">Closing position</div>
+    <p>The gap between MacQueen and Almosafer is 4.3 weighted points, and roughly 60% of it is engineering discipline rather than capital. But none of the strategy in §11–13 matters if the first gate is not cleared. <strong>The single most valuable thing MacQueen can do this quarter is ship a correct release.</strong> Everything else in this document is contingent on that.</p>
+  </div>
+</section>
+
+<!-- ============ 16 ============ -->
+<section id="s16">
+  <div class="snum">§ 16 — Sources</div>
+  <h2>Evidence base.</h2>
+  <p class="sub">All sources are public. Direct HTTP access to macqueen.co and almosafer.com was blocked by egress policy during preparation (§02); product claims for both were taken from indexed search results, app-store metadata mirrors, investor-facing pages and trade press.</p>
+  <ul class="srcs">
+    <li><a href="https://www.macqueen.co/en">MacQueen — Luxurious Hotel Booking (macqueen.co)</a></li>
+    <li><a href="https://www.macqueen.co/en/about-us">MacQueen — About Us: Journey, Vision &amp; Mission</a></li>
+    <li><a href="https://invest.macqueen.co/">MacQueen — Investor site (invest.macqueen.co)</a></li>
+    <li><a href="https://apps.apple.com/sa/app/macqueen-best-hotel-rates/id1495088277">MacQueen: Best Hotel Rates — Apple App Store (SA)</a></li>
+    <li><a href="https://play.google.com/store/apps/details?id=com.zeidex.macqueen">MacQueen: Best hotel rates — Google Play</a></li>
+    <li><a href="https://www.appbrain.com/app/macqueen-best-hotel-rates/com.zeidex.macqueen">AppBrain — MacQueen Android metrics</a></li>
+    <li><a href="https://macqueen-ios.soft112.com/">MacQueen iOS 22.23.8 — version history mirror</a></li>
+    <li><a href="https://justuseapp.com/en/app/1495088277/macqueen/reviews">JustUseApp — MacQueen reviews</a></li>
+    <li><a href="https://tracxn.com/d/companies/macqueen/__Pf4E3BHHldY31I_OH80bu6mhFjxu2Q9BSb7pR_zfLpY">Tracxn — MacQueen company profile</a></li>
+    <li><a href="https://www.crunchbase.com/organization/macqueen">Crunchbase — MacQueen</a></li>
+    <li><a href="https://zeidex.com/">Zeidex — AI Venture Technology Partner</a></li>
+    <li><a href="https://corporate.almosafer.com/en/about-us">Almosafer — Corporate / About Us</a></li>
+    <li><a href="https://global.almosafer.com/en">Almosafer — Global product surface</a></li>
+    <li><a href="https://www.almosafer.com/en/offers/wallet">Almosafer Wallet</a></li>
+    <li><a href="https://apps.apple.com/us/app/almosafer-flights-stays/id928866584">Almosafer: Flights &amp; Stays — Apple App Store</a></li>
+    <li><a href="https://play.google.com/store/apps/details?id=com.travel.almosafer">Almosafer: Flights &amp; Stays — Google Play</a></li>
+    <li><a href="https://justuseapp.com/en/app/928866584/almosafer-hotels-flights/reviews">JustUseApp — Almosafer reviews</a></li>
+    <li><a href="https://www.trustpilot.com/review/www.almosafer.net">Trustpilot — Almosafer</a></li>
+    <li><a href="https://www.phocuswire.com/news/technology/almosafer-chatgpt-app-ota-saudi-arabia-ai-travel-planning">PhocusWire — Almosafer adds AI travel planning with ChatGPT app</a></li>
+    <li><a href="https://skift.com/2026/04/13/skyscanner-almosafer-open-ai-chatgpt-middle-east/">Skift — Skyscanner, Almosafer launch ChatGPT apps in the Middle East</a></li>
+    <li><a href="https://www.zawya.com/en/press-release/companies-news/almosafer-becomes-saudi-arabias-first-chatgpt-integrated-app-transforming-travel-planning-through-generative-ai-sg4djpa1">Zawya — Almosafer becomes Saudi Arabia's first ChatGPT-integrated app</a></li>
+    <li><a href="https://skift.com/2025/06/13/the-private-sectors-role-in-saudis-travel-ambitions/">Skift — Almosafer CEO on Saudi travel growth and IPO plans</a></li>
+    <li><a href="https://www.agbi.com/companies/almosafer/">AGBI — Almosafer company profile</a></li>
+    <li><a href="https://www.zawya.com/en/press-release/companies-news/almosafer-expands-hajj-and-umrah-tourism-opportunities-with-inauguration-of-new-mawasim-office-in-makkah-frze9rr3">Zawya — Mawasim Makkah office / Hajj &amp; Umrah expansion</a></li>
+    <li><a href="https://www.zawya.com/en/press-release/companies-news/almosafer-named-the-official-flight-partner-for-the-direct-hajj-initiative-kv5l4o6y">Zawya — Almosafer named official flight partner, Direct Hajj Initiative</a></li>
+    <li><a href="https://enterpriseam.com/ksa/2026/05/13/ades-lazurde-tasheel-and-seera-post-1q-earnings/">Enterprise — Seera Q1 2026 earnings</a></li>
+    <li><a href="https://www.argaam.com/en/tadawul/tasi/seera">Argaam — Seera Group Holding (TADAWUL:1810)</a></li>
+    <li><a href="https://www.webintravel.com/saudi-arabia-online-travel-agency-ota-market-skyrockets-ota-air-gbv-hits-us1-9-billion-hotel-climbs-to-2-3-billion/">WiT — Saudi OTA market: air GBV $1.9B, hotel $2.3B</a></li>
+    <li><a href="https://www.imarcgroup.com/saudi-arabia-online-travel-market">IMARC — Saudi Arabia online travel market size &amp; forecast</a></li>
+    <li><a href="https://www.kenresearch.com/saudi-arabia-online-travel-ota-platforms-market">Ken Research — Saudi Arabia online travel &amp; OTA platforms market</a></li>
+    <li><a href="https://blog.wego.com/saudi-domestic-tourism-rises-16-in-q1-2026/">Wego — Saudi domestic tourism +16% in Q1 2026</a></li>
+    <li><a href="https://www.knightfrank.com.sa/en/newsroom/article/2026/6/ksa-hospitality--religious-tourism-report">Knight Frank — KSA hospitality &amp; religious tourism report 2026</a></li>
+    <li><a href="https://gulfnews.com/world/gulf/saudi/saudi-arabia-more-than-6-million-pilgrims-perform-umrah-in-record-breaking-season-1.95714738">Gulf News — record Umrah season</a></li>
+    <li><a href="https://logiolegion.com/blogs/bnpl-integration-ecommerce-checkout-saudi-arabia-tamara-tabby">BNPL integration in KSA checkout — Tamara &amp; Tabby</a></li>
+    <li><a href="https://www.orchestrapay.com/coverage/middle-east/saudi-arabia">OrchestraPay — KSA payment methods &amp; gateways</a></li>
+    <li><a href="https://www.dlapiperdataprotection.com/?c=SA">DLA Piper — Saudi Arabia data protection (PDPL)</a></li>
+    <li><a href="https://zatca.gov.sa/en/E-Invoicing/Pages/default.aspx">ZATCA — E-Invoicing (Fatoora)</a></li>
+    <li><a href="https://www.zentrumhub.com/blog/best-hotel-api-providers-2026/">Hotel API providers &amp; bedbank aggregation architecture, 2026</a></li>
+    <li><a href="https://www.altexsoft.com/blog/airline-content-integration/">AltexSoft — airline content integration, NDC and direct connect</a></li>
+    <li><a href="https://bookbetterdirect.com/hotel-website-conversion-rate-benchmarks-2026-direct-booking-vs-otas/">Hotel &amp; OTA conversion-rate benchmarks 2026</a></li>
+  </ul>
+</section>
+
+<footer>
+  <p style="margin-bottom:6px"><strong>MacQueen vs Almosafer — Competitive Technical Report v1.0</strong></p>
+  <p style="margin-bottom:6px;color:var(--ink-3)">Prepared by Omar Shalata · ZDX Venture Architecture · 27 July 2026 · Internal &amp; Confidential</p>
+  <p style="color:var(--ink-4);font-size:11px;max-width:80ch">Findings marked <em>Inferred</em> are reasoned from public proxies rather than measured directly; direct access to both products' web properties was unavailable during preparation. Re-baseline against first-party telemetry at the Horizon 0 gate before committing Horizon 1 spend.</p>
+</footer>
+
+</div>
+</body>
+</html>
